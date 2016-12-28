@@ -1,5 +1,6 @@
+var Transamerica = Transamerica || {};
 
-var ARIESRegression = (function() {
+Transamerica.ARIESRegression = (function() {
 	//private 
 	//load this dynamically - hardcoded 
 	var products = ["FEBII", "ACCUMIULr" ,"FFIULII", "IUL09", "LB201701", "Super201701"];	
@@ -118,11 +119,36 @@ var ARIESRegression = (function() {
 			callback = processJSON;
 		}
 		
-		Utility.AjaxCall(url, "", "GET", callback );
+		AjaxCall(url, "", "GET", callback );
 	};
 	
+	var AjaxCall = function(url, data, type, callback)
+	{
+		console.log("Calling AJAX");
+		$.ajax(
+		{
+			contentType : 'application/json; charset=utf-8',
+			url : url,
+			type: type,
+			data : data,
+			dataType: 'jsonp',
+			crossDomain: true,
+			success : function(d)
+			{
+				if(callback != null)
+				{
+					callback(d);
+				}
+				else
+				{
+					console.log("no callback provided");
+					console.log(d);
+				}
+			},
+		});
+	};
 	
-	
+	//public
 	var initialize = function (){
 		$("#schemaBox").hide();
 		
@@ -175,7 +201,7 @@ var ARIESRegression = (function() {
 	
 	
 	
-	//public
+	
 	var loadProducts = function(selectBoxId){
 		if(selectBoxId == "undefined"){
 		return; 
@@ -196,11 +222,10 @@ var ARIESRegression = (function() {
 			$("#productTitle").text(value);
 			var url = "https://c9e4efey8d.execute-api.us-west-2.amazonaws.com/prod/sample_api";
 			var data = {
-				tableName : value.toLowerCase();
+				tableName : value.toLowerCase()
 			};
 			var jsonString = JSON.stringify(data);
-
-			Utility.AjaxCall(url,jsonString,'GET',displayCases);
+			AjaxCall(url,jsonString,'GET',displayCases);
 		});	
 	};
 	return {
@@ -209,36 +234,5 @@ var ARIESRegression = (function() {
 	};
 })();
 
-var Utility = (function()
-{
-	var AjaxCall = function(url, data, type, callback)
-	{
-		console.log("Calling AJAX");
-		$.ajax(
-		{
-			contentType : 'application/json; charset=utf-8',
-			url : url,
-			type: type,
-			data : data,
-			dataType: 'jsonp',
-			crossDomain: true,
-			success : function(d)
-			{
-				if(callback != null)
-				{
-					callback(d);
-				}
-				else
-				{
-					console.log("no callback provided");
-					console.log(d);
-				}
-			},
-		});
-	};
-	return
-	{
-		AjaxCall: AjaxCall
-	}
-})();
+
 
