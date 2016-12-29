@@ -4,8 +4,6 @@
   <meta charset="utf-8">
   <title>AVU Regression App</title>
   <meta name="description" content=""/>
-  <link href="css/styles.css" rel="stylesheet">
-  <link href="css/gradients.css" rel="stylesheet">
   <!-- Latest compiled and minified CSS -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
   <!-- jQuery library -->
@@ -14,11 +12,7 @@
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 </head>
   <body class="container">
-    <header>
-      <nav class="website-nav">
-
-      </nav>
-    </header>
+	<br><br><br><br><br>
     <div class="">
 		<center><span id="productTitle"></span></center>
 		<form class="form-horizontal">
@@ -42,12 +36,10 @@
 			</div>
 			<div class="form-group">        
 			   <div class="col-sm-offset-2 col-sm-8">
-				<button type="button" class="btn btn-default" id="pressNext">Next</button>
+				<button type="button" class="btn btn-primary" id="pressNext">Next</button>
 			   </div>
 			</div>
 		</form>
-		
-		
     </div>
 	<center><div class="row" id="schemaBox">
 			<center><h3>JSON Schema Of the Response</h3></center>
@@ -71,20 +63,27 @@
 				</div>
 			<div class="form-group">        
 			   <div class="col-sm-offset-2 col-sm-8">
-				<button type="button" class="btn btn-default" id="compare">Compare</button>
+				<button type="button" class="btn btn-primary" id="compare">Compare</button>
 			   </div>
 			</div>
 			</form>
 	</div>
 	</center>
- 
+    
+	<div class="box"> 
+		<center><table class="table">
+			<tr id="table_title"><th>No.</th><th>Test Case</th><th>Result</th></tr>
+			<tbody id="tbody_cases">
+				<tr><td>1</td><td>Test</td><td id="result_test1"></td></tr>
+			</tbody>
+		</table></center>
+	</div>
+	
 </body>
   <script src="js/mainLogic.js"></script>
-
   <script>
 	//write script to call functions from mainLogic
-	ARIESRegression.initialize();
-	ARIESRegression.loadProducts("productSelect");
-	
+	Transamerica.ARIESRegression.initialize();
+	Transamerica.ARIESRegression.loadProducts("productSelect");
   </script>
 </html>
