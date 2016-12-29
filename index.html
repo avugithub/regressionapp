@@ -5,11 +5,16 @@
   <title>AVU Regression App</title>
   <meta name="description" content=""/>
   <!-- Latest compiled and minified CSS -->
+  <link href="src/jquery-customselect.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
   <!-- jQuery library -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
   <!-- Latest compiled JavaScript -->
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<script src="src/jquery-customselect.js"></script>
+
+
+	<script src="js/mainLogic.js"></script>
 </head>
   <body class="container">
 	<br><br><br><br><br>
@@ -39,7 +44,9 @@
 				<button type="button" class="btn btn-primary" id="pressNext">Next</button>
 			   </div>
 			</div>
+			<span id="notification"></span>
 		</form>
+		
     </div>
 	<center><div class="row" id="schemaBox">
 			<center><h3>JSON Schema Of the Response</h3></center>
@@ -50,7 +57,6 @@
 					<select id="nodeSelect" class="form-control"><option  default></option></select>
 				</div>
 				<div class="col-sm-4">
-					<button type="button" class="btn btn-success" id="selectNode">Select</button>
 					<button type="button" class="btn btn-danger" id="clearSelectedNode">Clear</button>
 					<br />
 					<br />
@@ -71,16 +77,13 @@
 	</center>
     
 	<div class="box"> 
-		<center><table class="table">
-			<tr id="table_title"><th>No.</th><th>Test Case</th><th>Result</th></tr>
-			<tbody id="tbody_cases">
-				<tr><td>1</td><td>Test</td><td id="result_test1"></td></tr>
-			</tbody>
-		</table></center>
+		<center><table  id ="resultTable" border="1">
+		</table>
+		</center>
 	</div>
 	
 </body>
-  <script src="js/mainLogic.js"></script>
+ 
   <script>
 	//write script to call functions from mainLogic
 	Transamerica.ARIESRegression.initialize();
