@@ -3,45 +3,109 @@ var Transamerica = Transamerica || {};
 Transamerica.ARIESRegression = (function() {
 	//private 
 	var sampleJSON = 
-			{
-			  "pcName":" Dr. Trinh Nellie Moreira    ",
-			  "pcBdate":"",
-			  "pcAgeId":"55",
-			  "pcStateId":"NewYork",
-			  "pcSexId":"Female",
-			  "pcRiskClassId":"PreferredSmoker",
-			  "pcSubStdId":"TableNo",
-			  "pcFlatExtra":"0.00",
-			  "pcFlatExtraYrs":"0",
-			  "svSolveId":"SolveforFace",
-			  "ipSolve":"None",
-			  "svFaceAmount":"1364",
-			  "psPremiumModeId":"BiWeekly26",
-			  "aiAmount":"0",
-			  "cbAge":"0",
-			  "cbUnits":"0",
-			  "ciUnits":"0",
-			  "pwPremiumWaiverId":"No",
-			  "dpPremiumWaiverId":"No",
-			  "mdPremiumWaiverId":"No",
-			  "prBackDate":"10/26/2014",
-			  "svNetWorth":"0",
-			  "svAnnualEarnedIncome":"0",
-			  "svMaxEstimatedFaceAmount":"0",
-			  "svAgeId":"0",
-			  "pyAutoSwitchId":"None",
-			  "rpChecked":"off",
-			  "diAmount":"0",
-			  "hmProvision":"NoProvision",
-			  "usBackDate":"10/26/2014",
-			  "usRunDate":"10/26/2014",
-			  "urUserName":"FC8E612603214C17A7646B3966E66C76",
-			  "urSiteCode":"ushome",
-			  "ProductId":"TS115"
-			};
+{
+          "pcName":" Client   ",
+          "pcBdate":" ",
+          "pcAgeId":"35",
+          "pcStateId":"California",
+          "pcSexId":"Male",
+          "pcRiskClassId":"PreferredPlus",
+          "pcSubStdId":"TableNo",
+          "pcFlatExtra":"0",
+          "pcFlatExtraYrs":"0",
+          "svGoalTrackerId":"false",
+          "svSolveId":"ManualInput",
+          "svFaceAmount":"381,329",
+          "svPlanTypeId":"CVATLevel",
+          "ioGPTViolations":"MaximumAllowable",
+          "psLumpSum":"0",
+          "psLumpSumMonth":"1",
+          "psPremiumModeId":"Annual",
+          "psAvoidMEC":"on",
+          "psPremium":"3850.00",
+          "psStartYer":"1",
+          "psEndYer":"86",
+          "pfTargetCVAmount":"",
+          "pfTargetCVYear":"",
+          "pfSearchBasisId":"CurrentRate",
+          "ioLoanInterestId":"Capitalize",
+          "ioActivityFrequencyId":"Annual",
+          "ioScheduleActivityAct":"",
+          "ioScheduleActivityStartYer":"",
+          "ioScheduleActivityEndYer":"",
+          "ioScheduleActivityAmount":"",
+          "pyScheduleChangeYear":"",
+          "pyScheduleChangeOptionId":"",
+          "pyScheduleChangeFace":"",
+          "pyScheduleChangeType":"",
+          "acLTCEnable":"No",
+"acLTCAgentNumber":"foo",
+          "acLTCRiskClass":"Standard",
+          "acLTCSubstandard":"TableNo",
+          "acLTCIllustrate":"No",
+          "acLTCEstimatedGrowthRate":"0",
+          "acLTCBenefitStartingAge":"0",
+          "acLTCDesiredDailyBenefit":"Desired",
+          "acLTCDesiredBenefitAmt":"0",
+          "acLTCPayInterest":"No",
+          "acAmount":"0",
+          "aiIndex":"",
+          "aiRelationship":"",
+          "aiRiskClass":"",
+          "aiName":"",
+          "aiSubstandard":"",
+          "aiAge":"",
+          "aiFlatExtra":"",
+          "aiFEXYears":"",
+          "aiSex":"",
+          "aiSmoker":"",
+          "aiFaceAmount":"",
+          "aiDuration":"",
+          "biAmount":"163,427",
+          "biDuration":"65",
+          "cbAge":"0",
+          "cbUnits":"0",
+          "cbBirthdate":"",
+          "ciUnits":"0",
+          "dpPremiumWaiverId":"No",
+          "mdPremiumWaiverId":"Standard",
+          "giAmount":"0",
+          "opChecked":"off",
+          "1035lumpsum":"0",
+          "exAmount1035":"0",
+          "exCostBasis1035":"",
+          "exType1035":"",
+          "exMEC1035":"",
+          "ioIndex":["0", "2", "4"],
+          "ioRate":[8.400,7.9400,4.20],
+          "ioPercent":[1.000,98.000,1.000],
+          "ioAllocation":"SpecificAllocation",
+          "ipSolve":"None",
+          "ipInitialLumpSum":"175000",
+          "ipMonthlyPayAmt":"2000",
+          "ipMonthlyPayYearsId":"20",
+          "ipBackendLumpSum":"12500",
+          "ipSumPaymentAmt":"0",
+          "ipBasePolicyPercentage":"70",
+          "ipBIRPercentage":"30",
+          "prBackDate":"05/14/2012",
+          "svNetWorth":"0",
+          "svAnnualEarnedIncome":"0",
+          "svMaxEstimatedFaceAmount":"0",
+          "svAgeId":"0",
+          "pyAutoSwitchId":"None",
+          "rpChecked":"off",
+          "diAmount":"0",
+          "hmProvision":"NoProvision",
+          "usBackDate":"05/14/2012",
+          "usRunDate":"05/14/2012",
+          "urUserName":"FC8E612603214C17A7646B3966E66C76",
+          "urSiteCode":"ushome",
+          "ProductId":"FUR16"
+	};
 	//load this dynamically - hardcoded 
 	var products = ["FEBII", "ACCUMIULr" ,"FFIULII", "IUL09", "LB201701", "Super201701"];	
-	var testCases = [{ScenarioName: "test", InputJSON: sampleJSON}];
+	var testCases = [{ScenarioName: "test case 1", InputJSON: sampleJSON}];
 	var displayCases = function(data){
 		console.log(data);
 		
@@ -52,7 +116,7 @@ Transamerica.ARIESRegression = (function() {
 	var SelectedNodes = [];
 	var outputs = {};
 	var processJSON = function(data){
-		console.log(JSON.parse(data));
+		console.log(JSON.parse(data));k
 	};
 	
 	var getAllkeys = function(obj)
@@ -82,23 +146,14 @@ Transamerica.ARIESRegression = (function() {
 	};
 	
 	var displaySchemaSelection = function(data){
-		console.log(JSON.parse(data));
 		var parsedData = JSON.parse(data);
 		var errorCode = parsedData.ErrorCode;
-		console.log(errorCode);
 		if(errorCode == 0)
 		{
 			//display the schema of Quote Object so user can select the nodes
 			var Quote = parsedData.Quote;
 			var Illustration = parsedData.Illustration;
-			if(Illustration == null || Quote == null)
-			{
-				
-				alert("No Quote or Illustration");
-				return;
-			}
-			else
-			{
+
 				ReponseNodes = getAllkeys(parsedData);
 				selectBox = $("#nodeSelect");
 				var len = ReponseNodes.length;
@@ -107,7 +162,9 @@ Transamerica.ARIESRegression = (function() {
 					var option = $("<option val="+ReponseNodes[i]+">"+ReponseNodes[i]+"</option>");
 					selectBox.append(option);
 				}
-				$("#selectNode").click(function(){
+				selectBox.customselect();
+				
+				$("#nodeSelect").change(function(){
 					//add selected nodes to an array
 					var value = $("#nodeSelect").val();
 					if(value != ""){
@@ -122,73 +179,102 @@ Transamerica.ARIESRegression = (function() {
 					SelectedNodes = [];
 					var tbody = $("#selected_nodes");
 					tbody.empty();
+					$("#resultTable").empty();
 				});
 				
 				$("#compare").click(function(){
+					$("#resultTable").empty();
 					if(SelectedNodes.length == 0){
 						alert("Please select a node to select");
 						return;
 					}
-					var i = 0;
-					var len = testCases.length;
-					for(i; i<len;i++){
-						
-						compareTwoEndPoints(testCases[i])
+					var table = $("#resultTable");
+					var header = "<tr><th>No.</th><th>Name</th>";
+					for(var o = 0 ; o < SelectedNodes.length; o++){
+						header += "<th>"+ SelectedNodes[o] + "</th>";
+					
 					}
+					header = header + "</tr>";
+					table.append($(header));
+					table.append($("<tbody id='result_tbody'></tbody>"));
+					compareTwoEndPoints();
 				});
-			}
-			$("#schemaBox").show();
+				if($("#endpoint2").val() == ""){
+					alert("Please provide url for the endpoint");
+					return;
+				}
+				var url = getMyTranswareServiceURL($("#endpoint2").val(),sampleJSON);
+				AjaxCall(url,"","GET",function(data){
+					var parsedData = JSON.parse(data);
+					if(errorCode == null || errorCode!=0)
+					{
+						$("#notification").html("<h4 style='color:red'>Error! Error: " + parsedData.Messages + "</h4>");
+					};
+				});		
 		}
 		else if(errorCode == null || errorCode!=0)
 		{
-			console.log("Error!");
-			console.log(parsedData.Messages);
+			$("#notification").html("<h4 style='color:red'>Error! Error: " + parsedData.Messages + "</h4>");
 		}
+		$("#schemaBox").show();
 	};
-	var compareTwoEndPoints = function(testCase){//mother function
-		var name = testCase["ScenarioName"];
-		var inputJSON  = testCase["InputJSON"];
-			
-		var endpoint1 = $("#endpoint1").val();
-		var url1  = getMyTranswareServiceURL(endpoint1,inputJSON);
-		var endpoint2 = $("#endpoint2").val();
-		var url2  = getMyTranswareServiceURL(endpoint2,inputJSON);
+
+	var compareTwoEndPoints = function(){
+		var i = 0;
+		var len = testCases.length;
+		var tbody = $("#result_tbody");
 		
-		outputs[name] = {};
-		//send 2 ajax requests in order in the same ajax call - do not refactor
-		AjaxCall(url1,"","GET", function(data){
-			outputs[name]["version1"] = JSON.parse(data);
-			AjaxCall(url2,"","GET", function(data){
-				outputs[name]["version2"] = JSON.parse(data);
-				outputs[name]["results"] = {};
-				var version1 = outputs[name]["version1"];
-				var version2 = outputs[name]["version2"];
+		for(i; i<len;i++){
+			var row = $("<tr></tr>");
+			testCase = testCases[i];
+			var name = testCase["ScenarioName"];
+			var inputJSON  = testCase["InputJSON"];
+			
+			row.append($("<td>"+(i+1)+"</td>"));
+			row.append($("<td>"+name+"</td>"));
+			
+			
+			var url1  = getMyTranswareServiceURL($("#endpoint1").val(),inputJSON);
+			var url2  = getMyTranswareServiceURL($("#endpoint2").val(),inputJSON);
+
+			outputs[name] = {};
+			//send 2 ajax requests in order in the same ajax call - do not refactor
+			AjaxCall(url1,"","GET", function(data){
+				outputs[name]["version1"] = JSON.parse(data);
+				AjaxCall(url2,"","GET", function(data){
+					outputs[name]["version2"] = JSON.parse(data);
+					outputs[name]["results"] = {};
+					var version1 = outputs[name]["version1"];
+					var version2 = outputs[name]["version2"];
 					if(version1 != null & version2 != null){
 						if(version1.ErrorCode == 0 & version2.ErrorCode == 0 ){
 						   //start compare
-						    var len = SelectedNodes.length; //for each selected key
+							var len = SelectedNodes.length; //for each selected key
 							var outputString = "";
-							for(var i =0; i< len; i++){
-							   var currentNodes = SelectedNodes[i].split(".");
+							for(var j =0; j< len; j++){
+							   var currentNodes = SelectedNodes[j].split(".");
 							   var version1Values = getValueForNode(version1,currentNodes);
 							   var version2Values = getValueForNode(version2,currentNodes);
 							   var result = compareTwoNodes(version1Values,version2Values)
-							   outputs[name]["results"][SelectedNodes[i]] = result;
+							   outputs[name]["results"][SelectedNodes[j]] = result;
 							   result =  result == true ? "green" : "red";
-							   outputString += SelectedNodes[i]+": <span class='glyphicon glyphicon-stop' style='color:"+result +"'></span> ";
+							   outputString ="<span class='glyphicon glyphicon-stop' style='color:"+result +"'></span> ";
+							   row.append($("<td>"+outputString+"</td>"));
+							   tbody.append(row);
 							}
 							$("#result_test1").html(outputString); //replace with result_caseGuid
-					    }
+						}
 					   else{
 						   //print out which version has error
 					   }
 					}else{
 					   //print out Error/ both end points
 					}
-				
+				});
 			});
-		})
-		
+		}
+
+				
 	};
 	
 	var getValueForNode = function(grandObj, nodes){
@@ -244,7 +330,7 @@ Transamerica.ARIESRegression = (function() {
 		var i = 0;
 		var len  = SelectedNodes.length;
 		for (i; i<len; i++){
-			tbody.append($("<tr><td>"+ i +"</td><td>"+SelectedNodes[i]+"</td></tr>"));
+			tbody.append($("<tr><td>"+ (i+1) +"</td><td>"+SelectedNodes[i]+"</td></tr>"));
 		}
 	};
 	
@@ -255,9 +341,9 @@ Transamerica.ARIESRegression = (function() {
 		var url = endpoint + "?key=" + key + "&configuration=&jsWebIllustration=" + paramString;
 		return url;
 	};
-	var AjaxCall = function(url, data, type, callback)
+	var  AjaxCall = function(url, data, type, callback)
 	{
-		console.log("Calling AJAX");
+		console.log(url);
 		$.ajax(
 		{
 			contentType : 'application/json; charset=utf-8',
@@ -266,6 +352,7 @@ Transamerica.ARIESRegression = (function() {
 			data : data,
 			dataType: 'jsonp',
 			crossDomain: true,
+			jsonpCallback : 'callback',
 			success : function(d)
 			{
 				if(callback != null)
@@ -291,10 +378,10 @@ Transamerica.ARIESRegression = (function() {
 			
 			//send over 1 case for testing
 			var url = getMyTranswareServiceURL(endpoint1,sampleJSON);
+			
 			AjaxCall(url,"","GET",displaySchemaSelection);
 		});
 	};
-	
 	var loadProducts = function(selectBoxId){
 		if(selectBoxId == "undefined"){
 		return; 
@@ -313,12 +400,22 @@ Transamerica.ARIESRegression = (function() {
 				return;
 			}
 			$("#productTitle").text(value);
-			var url = "https://c9e4efey8d.execute-api.us-west-2.amazonaws.com/prod/sample_api";
+			var url = "https://c9e4efey8d.execute-api.us-west-2.amazonaws.com/prod/sample_api?tableName="+value.toLowerCase();
 			var data = {
 				tableName : value.toLowerCase()
 			};
 			var jsonString = JSON.stringify(data);
-			AjaxCall(url,jsonString,'GET',displayCases);
+			
+			$.ajax({
+				url:url,
+				dataType:'json',
+				success:function(d){
+					console.log(d);
+				}
+				
+			});
+			
+			
 		});	
 	};
 	return {
