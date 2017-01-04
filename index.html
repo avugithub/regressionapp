@@ -1,92 +1,137 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="utf-8">
-  <title>AVU Regression App</title>
-  <meta name="description" content=""/>
-  <!-- Latest compiled and minified CSS -->
-  <link href="src/jquery-customselect.css" rel="stylesheet" />
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-  <!-- jQuery library -->
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
-  <!-- Latest compiled JavaScript -->
-	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-	<script src="src/jquery-customselect.js"></script>
-
-
-	<script src="js/mainLogic.js"></script>
+    <meta charset="utf-8">
+    <title>AVU Regression App</title>
+    <meta name="description" content="" />
+    <link href="src/jquery-customselect.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="src/jquery-customselect.js"></script>
+    <script src="js/notify.min.js"></script>
+    <script src="js/mainLogic.js"></script>
 </head>
-  <body class="container">
-	<br><br><br><br><br>
+
+<body class="container">
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
     <div class="">
-		<center><span id="productTitle"></span></center>
-		<form class="form-horizontal">
-			<div class="form-group">
-			<label  class="control-label col-sm-2"for="productSelect">Select Product</label>
-			<div class="col-sm-8">
-				<select id="productSelect" class="form-control"><option  default></option></select>
-			</div>
-			</div>
-			<div class="form-group">
-			  <label class="control-label col-sm-2" for="email">ENDPOINT A:</label>
-			  <div class="col-sm-8">
-				<input type="text" class="form-control" id="endpoint1" placeholder="Enter the webservice url">
-			  </div>
-			</div>
-			<div class="form-group">
-			  <label class="control-label col-sm-2" for="pwd">ENDPOINT B:</label>
-			  <div class="col-sm-8">          
-				<input type="text" class="form-control" id="endpoint2" placeholder="Enter the webservice url">
-			  </div>
-			</div>
-			<div class="form-group">        
-			   <div class="col-sm-offset-2 col-sm-8">
-				<button type="button" class="btn btn-primary" id="pressNext">Next</button>
-			   </div>
-			</div>
-			<span id="notification"></span>
-		</form>
-		
+        <center><span id="productTitle"></span>
+        </center>
+        <form class="form-horizontal">
+            <div class="form-group">
+                <label class="control-label col-sm-2" for="productSelect">Select Product</label>
+                <div class="col-sm-8">
+                    <select id="productSelect" class="form-control">
+                        <option default></option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-sm-2" for="email">ENDPOINT A:</label>
+                <div class="col-sm-8">
+                    <input type="text" class="form-control" id="endpoint1" placeholder="Enter the webservice url">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-sm-2" for="pwd">ENDPOINT B:</label>
+                <div class="col-sm-8">
+                    <input type="text" class="form-control" id="endpoint2" placeholder="Enter the webservice url">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-offset-2 col-sm-8">
+                    <button type="button" class="btn btn-primary" id="pressNext">Next</button>
+                </div>
+            </div>
+            <span id="notification"></span>
+        </form>
+
     </div>
-	<center><div class="row" id="schemaBox">
-			<center><h3>JSON Schema Of the Response</h3></center>
-			<form class="form-horizontal">
-				<div class="form-group">
-				<label for="nodeSelect" class="control-label col-sm-2">Select Key/Node to compare</label>
-				<div class="col-sm-4">
-					<select id="nodeSelect" class="form-control"><option  default></option></select>
-				</div>
-				<div class="col-sm-4">
-					<button type="button" class="btn btn-danger" id="clearSelectedNode">Clear</button>
-					<br />
-					<br />
-					<center><h4>Selected Keys</h4></center>
-					<table class="table">
-						<tr><th>No.</th><th>Selected Keys</th></tr>
-						<tbody id="selected_nodes" ></tbody>
-					</table>
-				</div>
-				</div>
-			<div class="form-group">        
-			   <div class="col-sm-offset-2 col-sm-8">
-				<button type="button" class="btn btn-primary" id="compare">Compare</button>
-			   </div>
-			</div>
-			</form>
-	</div>
-	</center>
-    
-	<div class="box"> 
-		<center><table  id ="resultTable" border="1">
-		</table>
-		</center>
-	</div>
-	
+    <center>
+        <div class="row" id="nodeSelectBox">
+            <center>
+                <h3>JSON Schema Of the Response</h3>
+            </center>
+            <div>
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label for="endpoint1Select" class="control-label col-sm-4">Nodes For Endpoint A</label>
+                        <div class="col-sm-6">
+                            <select id="endpoint1Select" class="form-control">
+                                <option default></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="endpoint2Select" class="control-label col-sm-4">Nodes For Endpoint B</label>
+                        <div class="col-sm-6">
+                            <select id="endpoint2Select" class="form-control">
+                                <option default></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-offset-2 col-sm-8">
+                            <button type="button" class="btn btn-primary" id="compare">Compare</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div>
+                <center>
+                    <h4>Selected Keys</h4>
+                </center>
+                <div class="col-sm-6">
+                    <center>
+                        <tr>
+                            <th>Endpoint A</th>
+                        </tr>
+                    </center>
+                    <button type="button" class="btn btn-danger" id="clear_endpoint1">Clear</button>
+                    <br>
+                    <br>
+                    <table class="table">
+                        <tbody id="selected_nodes_endpoint1"></tbody>
+                    </table>
+                </div>
+                <div class="col-sm-6">
+                    <center>
+                        <tr>
+                            <th>Endpoint B</th>
+                        </tr>
+                    </center>
+                    <button type="button" class="btn btn-danger" id="clear_endpoint2">Clear</button>
+                    <br>
+                    <br>
+                    <table class="table">
+                        <tbody id="selected_nodes_endpoint2"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </center>
+
+    <div class="box">
+        <center>
+            <table id="resultTable" border="1">
+            </table>
+        </center>
+    </div>
+
 </body>
- 
-  <script>
-	//write script to call functions from mainLogic
-	Transamerica.ARIESRegression.initialize();
-	Transamerica.ARIESRegression.loadProducts("productSelect");
-  </script>
+
+<script>
+    //write script to call functions from mainLogic
+    Transamerica.ARIESRegression.initialize();
+    Transamerica.ARIESRegression.loadProducts("productSelect");
+</script>
+
 </html>
