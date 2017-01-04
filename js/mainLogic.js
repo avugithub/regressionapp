@@ -2,6 +2,7 @@ var Transamerica = Transamerica || {};
 
 Transamerica.ARIESRegression = (function() {
 	//private 
+	var selectedProduct = "";
 	var sampleJSON = 
 {
           "pcName":" Client   ",
@@ -115,10 +116,7 @@ Transamerica.ARIESRegression = (function() {
 	var ReponseNodes = [];
 	var SelectedNodes = [];
 	var outputs = {};
-	var processJSON = function(data){
-		console.log(JSON.parse(data));k
-	};
-	
+
 	var getAllkeys = function(obj)
 	{
 		//going over all keys until exhausted
@@ -162,7 +160,7 @@ Transamerica.ARIESRegression = (function() {
 					var option = $("<option val="+ReponseNodes[i]+">"+ReponseNodes[i]+"</option>");
 					selectBox.append(option);
 				}
-				selectBox.customselect();
+
 				
 				$("#nodeSelect").change(function(){
 					//add selected nodes to an array
@@ -204,7 +202,7 @@ Transamerica.ARIESRegression = (function() {
 					return;
 				}
 				var url = getMyTranswareServiceURL($("#endpoint2").val(),sampleJSON);
-				AjaxCall(url,"","GET",function(data){
+				AjaxCallCORS(url,"","GET",function(data){
 					var parsedData = JSON.parse(data);
 					if(errorCode == null || errorCode!=0)
 					{
@@ -236,12 +234,12 @@ Transamerica.ARIESRegression = (function() {
 			
 			var url1  = getMyTranswareServiceURL($("#endpoint1").val(),inputJSON);
 			var url2  = getMyTranswareServiceURL($("#endpoint2").val(),inputJSON);
-
+		
 			outputs[name] = {};
 			//send 2 ajax requests in order in the same ajax call - do not refactor
-			AjaxCall(url1,"","GET", function(data){
+			AjaxCallCORS(url1,"","GET", function(data){
 				outputs[name]["version1"] = JSON.parse(data);
-				AjaxCall(url2,"","GET", function(data){
+				AjaxCallCORS(url2,"","GET", function(data){
 					outputs[name]["version2"] = JSON.parse(data);
 					outputs[name]["results"] = {};
 					var version1 = outputs[name]["version1"];
@@ -341,9 +339,8 @@ Transamerica.ARIESRegression = (function() {
 		var url = endpoint + "?key=" + key + "&configuration=&jsWebIllustration=" + paramString;
 		return url;
 	};
-	var  AjaxCall = function(url, data, type, callback)
+	var  AjaxCallCORS = function(url, data, type, callback)
 	{
-		console.log(url);
 		$.ajax(
 		{
 			contentType : 'application/json; charset=utf-8',
@@ -368,18 +365,48 @@ Transamerica.ARIESRegression = (function() {
 		});
 	};
 	
+	var rawAjaxGet = function(url , callback){
+		
+	}
+	
+	
+	var  AjaxCall = function(url, data, type, callback)
+	{
+		console.log(url);
+		$.ajax(
+		{
+			contentType : 'application/json; charset=utf-8',
+			url : url,
+			type: type,
+			data : data,
+			dataType: 'json',
+			success : function(d)
+			{
+				if(callback != null)
+				{
+					callback(d);
+				}
+				else
+				{
+					console.log("no callback provided");
+					console.log(d);
+				}
+			},
+		});
+	};
+	
+	
+	
 	//public
 	var initialize = function (){
 		$("#schemaBox").hide();
 		
 		$("#pressNext").click(function(){
-			var endpoint1 = $("#endpoint1").val();
-			console.log(endpoint1);
-			
+			var endpoint1 = $("#endpoint1").val();			
 			//send over 1 case for testing
 			var url = getMyTranswareServiceURL(endpoint1,sampleJSON);
-			
-			AjaxCall(url,"","GET",displaySchemaSelection);
+			console.log(endpoint1);
+			AjaxCallCORS(url,"","GET",displaySchemaSelection);
 		});
 	};
 	var loadProducts = function(selectBoxId){
@@ -399,21 +426,10 @@ Transamerica.ARIESRegression = (function() {
 				$("#productTitle").text("Please select a product !");
 				return;
 			}
-			$("#productTitle").text(value);
-			var url = "https://c9e4efey8d.execute-api.us-west-2.amazonaws.com/prod/sample_api?tableName="+value.toLowerCase();
-			var data = {
-				tableName : value.toLowerCase()
-			};
-			var jsonString = JSON.stringify(data);
+			selectedProduct = value;
+			$("#productTitle").text(selectedProduct);
 			
-			$.ajax({
-				url:url,
-				dataType:'json',
-				success:function(d){
-					console.log(d);
-				}
-				
-			});
+			
 			
 			
 		});	
