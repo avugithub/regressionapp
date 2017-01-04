@@ -5,13 +5,11 @@
     <meta charset="utf-8">
     <title>AVU Regression App</title>
     <meta name="description" content="" />
-    <link href="src/jquery-customselect.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-    <script src="src/jquery-customselect.js"></script>
     <script src="js/notify.min.js"></script>
     <script src="js/mainLogic.js"></script>
 </head>
@@ -32,6 +30,12 @@
                     <select id="productSelect" class="form-control">
                         <option default></option>
                     </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-sm-2" for="productSelect">Copy and Paste Kibana Url Here</label>
+                <div class="col-sm-8">
+                    <input type="text"  class="form-control" id="kibana_url"/>
                 </div>
             </div>
             <div class="form-group">
