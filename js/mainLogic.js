@@ -387,6 +387,7 @@ Transamerica.ARIESRegression = (function() {
 
 	//public
 	var initialize = function (){
+		$("#nodeSelectBox").hide();
 		$("#compare").click(function(){
 			$("#resultTable").empty();
 			var selectedNodesArray1 = selectedNodes["endpoint1"];
@@ -449,9 +450,33 @@ Transamerica.ARIESRegression = (function() {
 				return;
 			}
 			selectedProduct = value;
+
+
+			//change this when move to company domain	
+			var kibanaUrl = "https://search-scenarios-llsguds6zuyl7hl4gfsomx4pxi.us-west-2.es.amazonaws.com/_plugin/kibana/#/discover?_g=(refreshInterval:(display:Off,pause:!f,section:0,value:0),time:(from:now-30d,mode:quick,to:now))&_a=(columns:!(_source),\
+index:"+value.toLowerCase()+",interval:auto,query:(query_string:(analyze_wildcard:!t,query:'*')),sort:!(ComparisonLog.endTime,desc))";
+			window.open(kibanaUrl);
+
 			$("#productTitle").text(selectedProduct);
 			
-		});	
+		});
+
+		$("#kibana_url").on( "change", function(){
+			if(selectedProduct === ""){
+				$.notify("Please select a product");
+			}else{
+				var value = $(this).val();
+
+				//take out query 
+				var tableName = selectedProduct.toLowerCase();
+				var baseURl = "https://m7kx722wp8.execute-api.us-west-2.amazonaws.com/prod/gettestcasesfromkibanaurl";
+				var url = baseURl + "?tableName=" + tableName + "&url=" +encodeURIComponent(value.replace(",","")); 
+
+				AjaxCall(url, "", "GET" );
+
+			}
+		});
+
 	};
 	return {
 		loadProducts : loadProducts,
