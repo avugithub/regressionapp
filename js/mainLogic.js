@@ -40,7 +40,7 @@ Transamerica.ARIESRegression = (function() {
           "pyScheduleChangeFace":"",
           "pyScheduleChangeType":"",
           "acLTCEnable":"No",
-"acLTCAgentNumber":"foo",
+			"acLTCAgentNumber":"foo",
           "acLTCRiskClass":"Standard",
           "acLTCSubstandard":"TableNo",
           "acLTCIllustrate":"No",
@@ -105,16 +105,15 @@ Transamerica.ARIESRegression = (function() {
           "ProductId":"FUR16"
 	};
 	//load this dynamically - hardcoded 
-	var products = ["FEBII", "ACCUMIULr" ,"FFIULII", "IUL09", "LB201701", "Super201701"];	
+	var products = ["FEBII", "ACCUMIULr" ,"FFIULII", "IUL09", "LB201701", "Super201701"];
+	
 	var testCases = [{ScenarioName: "test case 1", InputJSON: sampleJSON}];
+	
 	var displayCases = function(data){
 		console.log(data);
-		
-		//data is from json
-		//display cases from api
 	};
-	var ReponseNodes = [];
-	var SelectedNodes = [];
+	var outputNodes = [];
+	var selectedNodes = { "endpoint1": [], "endpoint2":[]};
 	var outputs = {};
 
 	var getAllkeys = function(obj)
@@ -141,80 +140,6 @@ Transamerica.ARIESRegression = (function() {
 			}
 		}
 		return keys;
-	};
-	
-	var displaySchemaSelection = function(data){
-		var parsedData = JSON.parse(data);
-		var errorCode = parsedData.ErrorCode;
-		if(errorCode == 0)
-		{
-			//display the schema of Quote Object so user can select the nodes
-			var Quote = parsedData.Quote;
-			var Illustration = parsedData.Illustration;
-
-				ReponseNodes = getAllkeys(parsedData);
-				selectBox = $("#nodeSelect");
-				var len = ReponseNodes.length;
-				var  i = 0;
-				for(i; i < len; i++){
-					var option = $("<option val="+ReponseNodes[i]+">"+ReponseNodes[i]+"</option>");
-					selectBox.append(option);
-				}
-
-				
-				$("#nodeSelect").change(function(){
-					//add selected nodes to an array
-					var value = $("#nodeSelect").val();
-					if(value != ""){
-						SelectedNodes.push(value);
-						displaySelectedNode();
-					}else{
-						return;
-					}
-				});
-
-				$("#clearSelectedNode").click(function(){
-					SelectedNodes = [];
-					var tbody = $("#selected_nodes");
-					tbody.empty();
-					$("#resultTable").empty();
-				});
-				
-				$("#compare").click(function(){
-					$("#resultTable").empty();
-					if(SelectedNodes.length == 0){
-						alert("Please select a node to select");
-						return;
-					}
-					var table = $("#resultTable");
-					var header = "<tr><th>No.</th><th>Name</th>";
-					for(var o = 0 ; o < SelectedNodes.length; o++){
-						header += "<th>"+ SelectedNodes[o] + "</th>";
-					
-					}
-					header = header + "</tr>";
-					table.append($(header));
-					table.append($("<tbody id='result_tbody'></tbody>"));
-					compareTwoEndPoints();
-				});
-				if($("#endpoint2").val() == ""){
-					alert("Please provide url for the endpoint");
-					return;
-				}
-				var url = getMyTranswareServiceURL($("#endpoint2").val(),sampleJSON);
-				AjaxCallCORS(url,"","GET",function(data){
-					var parsedData = JSON.parse(data);
-					if(errorCode == null || errorCode!=0)
-					{
-						$("#notification").html("<h4 style='color:red'>Error! Error: " + parsedData.Messages + "</h4>");
-					};
-				});		
-		}
-		else if(errorCode == null || errorCode!=0)
-		{
-			$("#notification").html("<h4 style='color:red'>Error! Error: " + parsedData.Messages + "</h4>");
-		}
-		$("#schemaBox").show();
 	};
 
 	var compareTwoEndPoints = function(){
@@ -247,14 +172,15 @@ Transamerica.ARIESRegression = (function() {
 					if(version1 != null & version2 != null){
 						if(version1.ErrorCode == 0 & version2.ErrorCode == 0 ){
 						   //start compare
-							var len = SelectedNodes.length; //for each selected key
+							var len = selectedNodes["endpoint1"].length; //for each selected key
 							var outputString = "";
 							for(var j =0; j< len; j++){
-							   var currentNodes = SelectedNodes[j].split(".");
-							   var version1Values = getValueForNode(version1,currentNodes);
-							   var version2Values = getValueForNode(version2,currentNodes);
+							   var currentNode1 = selectedNodes["endpoint1"][j].split(".");
+							   var currentNode2 = selectedNodes["endpoint2"][j].split(".");
+							   console.log(currentNode1 , currentNode2)
+							   var version1Values = getValueForNode(version1,currentNode1);
+							   var version2Values = getValueForNode(version2,currentNode2);
 							   var result = compareTwoNodes(version1Values,version2Values)
-							   outputs[name]["results"][SelectedNodes[j]] = result;
 							   result =  result == true ? "green" : "red";
 							   outputString ="<span class='glyphicon glyphicon-stop' style='color:"+result +"'></span> ";
 							   row.append($("<td>"+outputString+"</td>"));
@@ -270,9 +196,7 @@ Transamerica.ARIESRegression = (function() {
 					}
 				});
 			});
-		}
-
-				
+		}		
 	};
 	
 	var getValueForNode = function(grandObj, nodes){
@@ -311,7 +235,7 @@ Transamerica.ARIESRegression = (function() {
 		var i = 0;
 		for(i; i< len; i++){
 			if(typeof(arr1[i]) == "object" && typeof(arr2[i]) == "object"){
-				result = JSON.stringify(arr1[i]) === JSON.stringify(arr2[i]);
+				result = JSON.stringify(arr1[i]) === JSON.stringify(arr2[i]); // we can go deeper !
 			}else{
 				if(arr1[i] != arr2[i])
 				{	
@@ -322,24 +246,18 @@ Transamerica.ARIESRegression = (function() {
 		return result;
 	};
 	
-	var displaySelectedNode = function(){
-		var tbody = $("#selected_nodes");
+	var displaySelectedNode = function(tbodyId, currentSelectedNodes){
+		var tbody = $("#" + tbodyId);
 		tbody.empty();
 		var i = 0;
-		var len  = SelectedNodes.length;
+		var len  = currentSelectedNodes.length;
 		for (i; i<len; i++){
-			tbody.append($("<tr><td>"+ (i+1) +"</td><td>"+SelectedNodes[i]+"</td></tr>"));
+			tbody.append($("<tr><td>"+(i+1)+"</td><td>"+currentSelectedNodes[i]+"</td></tr>"));
 		}
 	};
 	
-	var getMyTranswareServiceURL = function(endpoint,caseJSON){
-		var calServiceUrl = endpoint;
-		var key = "f19d590dcc2b";
-		var paramString = JSON.stringify(caseJSON);
-		var url = endpoint + "?key=" + key + "&configuration=&jsWebIllustration=" + paramString;
-		return url;
-	};
-	var  AjaxCallCORS = function(url, data, type, callback)
+	//AJAX
+	var  AjaxCallCORS = function(url, data, type, callback,errorcallback)
 	{
 		$.ajax(
 		{
@@ -349,7 +267,6 @@ Transamerica.ARIESRegression = (function() {
 			data : data,
 			dataType: 'jsonp',
 			crossDomain: true,
-			jsonpCallback : 'callback',
 			success : function(d)
 			{
 				if(callback != null)
@@ -362,15 +279,18 @@ Transamerica.ARIESRegression = (function() {
 					console.log(d);
 				}
 			},
+			error: function ( data){
+				if(data.status == 404){
+					if(errorcallback != undefined){
+						errorcallback(data);
+					}
+				}
+
+			} 
 		});
 	};
 	
-	var rawAjaxGet = function(url , callback){
-		
-	}
-	
-	
-	var  AjaxCall = function(url, data, type, callback)
+	var  AjaxCall = function(url, data, type, callback, errorcallback)
 	{
 		console.log(url);
 		$.ajax(
@@ -395,20 +315,122 @@ Transamerica.ARIESRegression = (function() {
 		});
 	};
 	
+	var displaySchema = function (data, endpointDOMId) {
+		var parsedData = JSON.parse(data);
+		var errorCode = parsedData.ErrorCode;
+		console.log(parsedData);
+		if(errorCode == 0)
+		{
+			var selectBox = $("#"+endpointDOMId+"Select");
+			var Quote = parsedData.Quote;
+			var Illustration = parsedData.Illustration;
+			outputNodes = getAllkeys(parsedData);
+			var len = outputNodes.length;
+			var  i = 0;
+			for(i; i < len; i++){
+				var option = $("<option val="+outputNodes[i]+">"+outputNodes[i]+"</option>");
+				selectBox.append(option);
+			}
+			selectBox.select2(); // make select box searchable
+			selectBox.change(function(){
+				//add selected nodes to an array
+				var value = selectBox.val();
+				if(value != ""){
+					selectedNodes[endpointDOMId].push(value);
+					displaySelectedNode("selected_nodes_" + endpointDOMId,selectedNodes[endpointDOMId]);
+				}else{
+					return;
+				}
+			});
+
+			$("#clear_"+endpointDOMId).click(function(){
+					selectedNodes[endpointDOMId] = [];
+					var tbody = $("#selected_nodes_" + endpointDOMId);
+					tbody.empty();
+					$("#resultTable").empty();
+			});
+		}
+		else if(errorCode == null || errorCode!=0)
+		{
+			//TODO : customize this for each url
+			$("#notification").html("<h4 style='color:red'>Error! Error: " + parsedData.Messages + "</h4>");
+		}
+	}
+
+	var getMyTranswareServiceURL = function(endpoint,caseJSON){
+		var calServiceUrl = endpoint;
+		var paramString = JSON.stringify(caseJSON);
+		var url = endpoint + "?key=f19d590dcc2b" + "&configuration=&jsWebIllustration=" + paramString;
+		return url;
+	};
 	
-	
+	var testEndPoint = function(endpoint, sampleJSON, endpointDOMId){
+		var url = getMyTranswareServiceURL(endpoint,sampleJSON);
+		var callback = function(data){
+			displaySchema(data, endpointDOMId);
+		}
+		var errorcallback = function(data){
+			console.log(data);
+			$.notify("Status : "+ data.status+" !No response received from !" + $("#"+endpointDOMId).val());
+			$("#nodeSelectBox").hide();
+		}
+		if(url.includes("http")){
+			AjaxCallCORS(url,"","GET",callback,errorcallback);
+		}else if(url.includes("https")){
+			AjaxCall(url,"","GET",callback,errorcallback);
+		}else{
+			var newUrl = "http://" + url;
+			AjaxCallCORS(newUrl,"","GET",callback,errorcallback);
+			$("#"+endpointDOMId).val("http://"+ endpoint);
+		}
+	}
+
 	//public
 	var initialize = function (){
-		$("#schemaBox").hide();
-		
+		$("#compare").click(function(){
+			$("#resultTable").empty();
+			var selectedNodesArray1 = selectedNodes["endpoint1"];
+			var selectedNodesArray2 = selectedNodes["endpoint2"];
+
+			//validation
+			if(selectedNodesArray1.length == 0 && selectedNodesArray2.length == 0){
+				alert("Please select node for both end points");
+				return false;
+			}
+			else if(selectedNodesArray1.length != selectedNodesArray2.length)
+			{
+				alert("Can't compare ! Make sure the number of selected nodes for both endpoints are the same");
+				return false;
+			}
+
+			var table = $("#resultTable");
+			var header = "<tr><th>No.</th><th>Name</th>";
+			for(var o = 0 ; o < selectedNodesArray1.length; o++){
+				header += "<th>"+ selectedNodesArray1[o] + " vs "+ selectedNodesArray2[o]+"</th>";
+			}
+			header = header + "</tr>";
+			table.append($(header));
+			table.append($("<tbody id='result_tbody'></tbody>"));
+			compareTwoEndPoints();
+		});
+
 		$("#pressNext").click(function(){
 			var endpoint1 = $("#endpoint1").val();			
 			//send over 1 case for testing
-			var url = getMyTranswareServiceURL(endpoint1,sampleJSON);
-			console.log(endpoint1);
-			AjaxCallCORS(url,"","GET",displaySchemaSelection);
+			var endpoint2 = $("#endpoint2").val();
+
+			if(endpoint1 === "" || endpoint2 === ""){
+				alert("One of the end point is left blank !");
+				return false;
+			}
+			
+			var json= sampleJSON;
+			$("#nodeSelectBox").show();
+			testEndPoint(endpoint1, json ,"endpoint1");
+			testEndPoint(endpoint2, json ,"endpoint2");
 		});
 	};
+
 	var loadProducts = function(selectBoxId){
 		if(selectBoxId == "undefined"){
 		return; 
@@ -429,9 +451,6 @@ Transamerica.ARIESRegression = (function() {
 			selectedProduct = value;
 			$("#productTitle").text(selectedProduct);
 			
-			
-			
-			
 		});	
 	};
 	return {
@@ -439,6 +458,5 @@ Transamerica.ARIESRegression = (function() {
 		initialize: initialize
 	};
 })();
-
 
 
