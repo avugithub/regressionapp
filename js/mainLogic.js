@@ -3,15 +3,14 @@ var Transamerica = Transamerica || {};
 Transamerica.ARIESRegression = (function() {
 	//private 
 	var selectedProduct = "";
-
-	//load this dynamically - hardcoded 
 	var products = ["FEBII", "ACCUMIULr" ,"FFIULII", "IUL09", "LB201701", "Super201701"];
-	
+	var outputNodes = [];
+	var selectedNodes = { "endpoint1": [], "endpoint2":[]};
+	var outputs = {};	
 	var testCases = [];
-	
+	var isSameSystem = true;
+
 	var displayCases = function(data){
-		console.log(data)
-		
 		var response = data["response"];
 		if(Array.isArray(response) == false){
 			table.notify("No Test Case Received For the Given Query Url");
@@ -25,15 +24,13 @@ Transamerica.ARIESRegression = (function() {
 			for (i =0 ; i < num; i++ ){
 				var row = $("<tr id="+response[i]["_source"]["ScenarioGuid"]+"><td>"+(i+1)+
 					"</td><td>"+response[i]["_source"]["ScenarioName"] +
-					"</td><td>"+response[i]["_source"]["currentStatus"]+"</td></tr>");
+					"</tr>");
 				tbody.append(row);
 			}
 			$("#num_cases").html("( num: " + response.length + " cases)");
 		}
 	};
-	var outputNodes = [];
-	var selectedNodes = { "endpoint1": [], "endpoint2":[]};
-	var outputs = {};
+
 
 	var getAllkeys = function(obj)
 	{
@@ -64,61 +61,63 @@ Transamerica.ARIESRegression = (function() {
 	var compareTwoEndPoints = function(){
 		var i = 0;
 		var len = testCases.length;
-		var tbody = $("#result_tbody");
-		
 		for(i; i<len;i++){
-			var row = $("<tr></tr>");
 			testCase = testCases[i];
-			var name = testCase["ScenarioName"];
-			var inputJSON  = testCase["InputJSON"];
-			
-			row.append($("<td>"+(i+1)+"</td>"));
-			row.append($("<td>"+name+"</td>"));
-			
-			
-			var url1  = getMyTranswareServiceURL($("#endpoint1").val(),inputJSON);
-			var url2  = getMyTranswareServiceURL($("#endpoint2").val(),inputJSON);
-		
-			outputs[name] = {};
-			//send 2 ajax requests in order in the same ajax call - do not refactor
-			AjaxCallCORS(url1,"","GET", function(data){
-				outputs[name]["version1"] = JSON.parse(data);
-				AjaxCallCORS(url2,"","GET", function(data){
-					outputs[name]["version2"] = JSON.parse(data);
-					outputs[name]["results"] = {};
-					var version1 = outputs[name]["version1"];
-					var version2 = outputs[name]["version2"];
-					if(version1 != null & version2 != null){
-						if(version1.ErrorCode == 0 & version2.ErrorCode == 0 ){
-						   //start compare
-							var len = selectedNodes["endpoint1"].length; //for each selected key
-							var outputString = "";
-							for(var j =0; j< len; j++){
-							   var currentNode1 = selectedNodes["endpoint1"][j].split(".");
-							   var currentNode2 = selectedNodes["endpoint2"][j].split(".");
-							   console.log(currentNode1 , currentNode2)
-							   var version1Values = getValueForNode(version1,currentNode1);
-							   var version2Values = getValueForNode(version2,currentNode2);
-							   var result = compareTwoNodes(version1Values,version2Values)
-							   result =  result == true ? "green" : "red";
-							   outputString ="<span class='glyphicon glyphicon-stop' style='color:"+result +"'></span> ";
-							   row.append($("<td>"+outputString+"</td>"));
-							   tbody.append(row);
-							}
-							$("#result_test1").html(outputString); //replace with result_caseGuid
-						}
-					   else{
-						   //print out which version has error
-					   }
-					}else{
-					   //print out Error/ both end points
-					}
-				});
-			});
+			var scenarioID = testCase["_source"]["ScenarioGuid"];
+			var inputJSON  = testCase["_source"]["InputJSON"]
+			processComparison(scenarioID, inputJSON);
 		}		
 	};
 	
-	var getValueForNode = function(grandObj, nodes){
+	var processComparison = function(scenarioID, inputJSON){
+		//the reason I moved the code is closure in JS is only created inside function
+		//refer to http://www.w3schools.com/js/js_function_closures.asp
+		var url1  = getMyTranswareServiceURL($("#endpoint1").val(),inputJSON);
+		var url2  = getMyTranswareServiceURL($("#endpoint2").val(),inputJSON);
+		var row = $("#"+scenarioID);
+
+		outputs[scenarioID] = {};
+		//send 2 ajax requests in order in the same ajax call - do not refactor
+		AjaxCallCORS(url1,"","GET", function(data){
+			outputs[scenarioID]["version1"] = JSON.parse(data);
+			AjaxCallCORS(url2,"","GET", function(data){
+				outputs[scenarioID]["version2"] = JSON.parse(data);
+				outputs[scenarioID]["results"] = {};
+				var version1 = outputs[scenarioID]["version1"];
+				var version2 = outputs[scenarioID]["version2"];
+				
+
+				if(version1 != null & version2 != null){
+					if(version1.ErrorCode == 0 & version2.ErrorCode == 0 ){
+					   //start compare
+						var len = selectedNodes["endpoint1"].length; //for each selected key
+						var outputString = "";
+						var tds = "";
+						for(var j =0; j< len; j++){
+						   var currentNode1 = selectedNodes["endpoint1"][j];
+						   var currentNode2 = selectedNodes["endpoint2"][j];
+						   console.log(currentNode1 , currentNode2)
+						   var version1Values = getValueForNode(version1,currentNode1);
+						   var version2Values = getValueForNode(version2,currentNode2);
+						   var result = compareTwoNodes(version1Values,version2Values)
+						   result =  result == true ? "green" : "red";
+						   outputString ="<span class='glyphicon glyphicon-stop' style='color:"+result +"'></span> ";
+						   tds += "<td>"+outputString+"</td>";
+						}	
+						row.append($(tds));
+					}
+				   else{
+					   //print out which version has error
+				   }
+				}else{
+				   //print out Error/ both end points
+				}
+			});
+		});
+	};
+
+	var getValueForNode = function(grandObj, nodeString){
+		var nodes  = nodeString.split(".");
 		var obj = grandObj;
 		for (var i = 0, len = nodes.length; i < len; i++) {
 			obj = obj[nodes[i]]; 
@@ -274,7 +273,7 @@ Transamerica.ARIESRegression = (function() {
 					selectedNodes[endpointDOMId] = [];
 					var tbody = $("#selected_nodes_" + endpointDOMId);
 					tbody.empty();
-					$("#resultTable").empty();
+					
 			});
 		}
 		else if(errorCode == null || errorCode!=0)
@@ -286,8 +285,9 @@ Transamerica.ARIESRegression = (function() {
 
 	var getMyTranswareServiceURL = function(endpoint,caseJSON){
 		var calServiceUrl = endpoint;
-		var paramString = JSON.stringify(caseJSON).replace("\" \"", "\"\"");
-		console.log(paramString)
+		var paramString = JSON.stringify(caseJSON);
+		var re = new RegExp("\" \"" , 'g');
+		paramString = paramString.replace(re, "\"\"");
 		var url = endpoint + "?key=f19d590dcc2b" + "&configuration=&jsWebIllustration=" + paramString;
 		return url;
 	};
@@ -318,7 +318,6 @@ Transamerica.ARIESRegression = (function() {
 		$("#nodeSelectBox").hide();
 		$("#kibanaBox").hide();
 		$("#compare").click(function(){
-			$("#resultTable").empty();
 			var selectedNodesArray1 = selectedNodes["endpoint1"];
 			var selectedNodesArray2 = selectedNodes["endpoint2"];
 
@@ -333,20 +332,19 @@ Transamerica.ARIESRegression = (function() {
 				return false;
 			}
 
-			var table = $("#resultTable");
-			var header = "<tr><th>No.</th><th>Name</th>";
+			var thead = $("#tableTitle");
+			thead.empty();
+			var header = "<tr><th>No</th><th>Name</th>";
 			for(var o = 0 ; o < selectedNodesArray1.length; o++){
 				header += "<th>"+ selectedNodesArray1[o] + " vs "+ selectedNodesArray2[o]+"</th>";
 			}
 			header = header + "</tr>";
-			table.append($(header));
-			table.append($("<tbody id='result_tbody'></tbody>"));
+			thead.append($(header));
 			compareTwoEndPoints();
 		});
 
 		$("#pressNext").click(function(){
 			var endpoint1 = $("#endpoint1").val();			
-			//send over 1 case for testing
 			var endpoint2 = $("#endpoint2").val();
 
 			if(endpoint1 === "" || endpoint2 === ""){
@@ -357,23 +355,34 @@ Transamerica.ARIESRegression = (function() {
 				$.notify("There is no test case for testing. Please provide the kibana url and press Search")
 				return false;
 			}
-			else
+			else if(isSameSystem === false)
 			{	
-				console.log(testCases[0]["_source"]["ScenarioName"])
+				//do this for if the systems are different
+				//actually get a case that is currently passing 
 				var json= testCases[0]["_source"]["InputJSON"];
 				$("#nodeSelectBox").show();
 				testEndPoint(endpoint1, json ,"endpoint1");
 				testEndPoint(endpoint2, json ,"endpoint2");
+			}else if(isSameSystem === true)
+			{
+				
 			}
 		});
+		$('input[type=radio][name=sameSystem]').change(function() {
+	        if (this.value == 'yes') 
+	        {
+	            isSameSystem = true;
+	        }
+	        else if (this.value == 'no') 
+	        {
+	            isSameSystem = false;
+	        }
+   		});
 	};
 
 	var loadProducts = function(selectBoxId){
-		if(selectBoxId == "undefined"){
-		return; 
-		}
-		console.log("selectBoxId", selectBoxId);
-		selectBox = $("#"+selectBoxId);
+
+		selectBox = $("#productSelect");
 		var  i = 0;
 		for(i; i < products.length; i++){
 			var option = $("<option val="+products[i]+">"+products[i]+"</option>");
@@ -389,12 +398,18 @@ Transamerica.ARIESRegression = (function() {
 			$("#kibanaBox").show();
 
 			//change this when move to company domain	
-			var kibanaUrl = "https://search-scenarios-llsguds6zuyl7hl4gfsomx4pxi.us-west-2.es.amazonaws.com/_plugin/kibana/#/discover?_g=(refreshInterval:(display:Off,pause:!f,section:0,value:0),time:(from:now-30d,mode:quick,to:now))&_a=(columns:!(_source),\
-index:"+value.toLowerCase()+",interval:auto,query:(query_string:(analyze_wildcard:!t,query:'*')),sort:!(ComparisonLog.endTime,desc))";
-			window.open(kibanaUrl);
-
 			$("#productTitle").text(selectedProduct);
 			
+		});
+
+		$("#redirectKibana").click(function(){
+			if(selectedProduct === ""){
+				$.notify("Please Select A Product");
+				return false;
+			}
+			var kibanaUrl = "https://search-scenarios-llsguds6zuyl7hl4gfsomx4pxi.us-west-2.es.amazonaws.com/_plugin/kibana/#/discover?_g=(refreshInterval:(display:Off,pause:!f,section:0,value:0),time:(from:now-30d,mode:quick,to:now))&_a=(columns:!(_source),\
+index:"+selectedProduct.toLowerCase()+",interval:auto,query:(query_string:(analyze_wildcard:!t,query:'*')),sort:!(ComparisonLog.endTime,desc))";
+			window.open(kibanaUrl);
 		});
 
 		$("#search").click(function(){
@@ -420,6 +435,7 @@ index:"+value.toLowerCase()+",interval:auto,query:(query_string:(analyze_wildcar
 
 			}
 		});
+
 
 	};
 	return {
