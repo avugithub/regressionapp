@@ -3,114 +3,33 @@ var Transamerica = Transamerica || {};
 Transamerica.ARIESRegression = (function() {
 	//private 
 	var selectedProduct = "";
-	var sampleJSON = 
-{
-          "pcName":" Client   ",
-          "pcBdate":" ",
-          "pcAgeId":"35",
-          "pcStateId":"California",
-          "pcSexId":"Male",
-          "pcRiskClassId":"PreferredPlus",
-          "pcSubStdId":"TableNo",
-          "pcFlatExtra":"0",
-          "pcFlatExtraYrs":"0",
-          "svGoalTrackerId":"false",
-          "svSolveId":"ManualInput",
-          "svFaceAmount":"381,329",
-          "svPlanTypeId":"CVATLevel",
-          "ioGPTViolations":"MaximumAllowable",
-          "psLumpSum":"0",
-          "psLumpSumMonth":"1",
-          "psPremiumModeId":"Annual",
-          "psAvoidMEC":"on",
-          "psPremium":"3850.00",
-          "psStartYer":"1",
-          "psEndYer":"86",
-          "pfTargetCVAmount":"",
-          "pfTargetCVYear":"",
-          "pfSearchBasisId":"CurrentRate",
-          "ioLoanInterestId":"Capitalize",
-          "ioActivityFrequencyId":"Annual",
-          "ioScheduleActivityAct":"",
-          "ioScheduleActivityStartYer":"",
-          "ioScheduleActivityEndYer":"",
-          "ioScheduleActivityAmount":"",
-          "pyScheduleChangeYear":"",
-          "pyScheduleChangeOptionId":"",
-          "pyScheduleChangeFace":"",
-          "pyScheduleChangeType":"",
-          "acLTCEnable":"No",
-			"acLTCAgentNumber":"foo",
-          "acLTCRiskClass":"Standard",
-          "acLTCSubstandard":"TableNo",
-          "acLTCIllustrate":"No",
-          "acLTCEstimatedGrowthRate":"0",
-          "acLTCBenefitStartingAge":"0",
-          "acLTCDesiredDailyBenefit":"Desired",
-          "acLTCDesiredBenefitAmt":"0",
-          "acLTCPayInterest":"No",
-          "acAmount":"0",
-          "aiIndex":"",
-          "aiRelationship":"",
-          "aiRiskClass":"",
-          "aiName":"",
-          "aiSubstandard":"",
-          "aiAge":"",
-          "aiFlatExtra":"",
-          "aiFEXYears":"",
-          "aiSex":"",
-          "aiSmoker":"",
-          "aiFaceAmount":"",
-          "aiDuration":"",
-          "biAmount":"163,427",
-          "biDuration":"65",
-          "cbAge":"0",
-          "cbUnits":"0",
-          "cbBirthdate":"",
-          "ciUnits":"0",
-          "dpPremiumWaiverId":"No",
-          "mdPremiumWaiverId":"Standard",
-          "giAmount":"0",
-          "opChecked":"off",
-          "1035lumpsum":"0",
-          "exAmount1035":"0",
-          "exCostBasis1035":"",
-          "exType1035":"",
-          "exMEC1035":"",
-          "ioIndex":["0", "2", "4"],
-          "ioRate":[8.400,7.9400,4.20],
-          "ioPercent":[1.000,98.000,1.000],
-          "ioAllocation":"SpecificAllocation",
-          "ipSolve":"None",
-          "ipInitialLumpSum":"175000",
-          "ipMonthlyPayAmt":"2000",
-          "ipMonthlyPayYearsId":"20",
-          "ipBackendLumpSum":"12500",
-          "ipSumPaymentAmt":"0",
-          "ipBasePolicyPercentage":"70",
-          "ipBIRPercentage":"30",
-          "prBackDate":"05/14/2012",
-          "svNetWorth":"0",
-          "svAnnualEarnedIncome":"0",
-          "svMaxEstimatedFaceAmount":"0",
-          "svAgeId":"0",
-          "pyAutoSwitchId":"None",
-          "rpChecked":"off",
-          "diAmount":"0",
-          "hmProvision":"NoProvision",
-          "usBackDate":"05/14/2012",
-          "usRunDate":"05/14/2012",
-          "urUserName":"FC8E612603214C17A7646B3966E66C76",
-          "urSiteCode":"ushome",
-          "ProductId":"FUR16"
-	};
+
 	//load this dynamically - hardcoded 
 	var products = ["FEBII", "ACCUMIULr" ,"FFIULII", "IUL09", "LB201701", "Super201701"];
 	
-	var testCases = [{ScenarioName: "test case 1", InputJSON: sampleJSON}];
+	var testCases = [];
 	
 	var displayCases = function(data){
-		console.log(data);
+		console.log(data)
+		
+		var response = data["response"];
+		if(Array.isArray(response) == false){
+			table.notify("No Test Case Received For the Given Query Url");
+		}else{
+			var tbody = $("#testCases");
+			tbody.empty();
+			testCases = [];
+			testCases = response;
+			var num = response.length;
+			var i;
+			for (i =0 ; i < num; i++ ){
+				var row = $("<tr id="+response[i]["_source"]["ScenarioGuid"]+"><td>"+(i+1)+
+					"</td><td>"+response[i]["_source"]["ScenarioName"] +
+					"</td><td>"+response[i]["_source"]["currentStatus"]+"</td></tr>");
+				tbody.append(row);
+			}
+			$("#num_cases").html("( num: " + response.length + " cases)");
+		}
 	};
 	var outputNodes = [];
 	var selectedNodes = { "endpoint1": [], "endpoint2":[]};
@@ -312,6 +231,14 @@ Transamerica.ARIESRegression = (function() {
 					console.log(d);
 				}
 			},
+			error: function ( data){
+				if(data.status == 404){
+					if(errorcallback != undefined){
+						errorcallback(data);
+					}
+				}
+
+			} 
 		});
 	};
 	
@@ -359,7 +286,8 @@ Transamerica.ARIESRegression = (function() {
 
 	var getMyTranswareServiceURL = function(endpoint,caseJSON){
 		var calServiceUrl = endpoint;
-		var paramString = JSON.stringify(caseJSON);
+		var paramString = JSON.stringify(caseJSON).replace("\" \"", "\"\"");
+		console.log(paramString)
 		var url = endpoint + "?key=f19d590dcc2b" + "&configuration=&jsWebIllustration=" + paramString;
 		return url;
 	};
@@ -388,6 +316,7 @@ Transamerica.ARIESRegression = (function() {
 	//public
 	var initialize = function (){
 		$("#nodeSelectBox").hide();
+		$("#kibanaBox").hide();
 		$("#compare").click(function(){
 			$("#resultTable").empty();
 			var selectedNodesArray1 = selectedNodes["endpoint1"];
@@ -424,11 +353,18 @@ Transamerica.ARIESRegression = (function() {
 				alert("One of the end point is left blank !");
 				return false;
 			}
-			
-			var json= sampleJSON;
-			$("#nodeSelectBox").show();
-			testEndPoint(endpoint1, json ,"endpoint1");
-			testEndPoint(endpoint2, json ,"endpoint2");
+			if(testCases.length == 0){
+				$.notify("There is no test case for testing. Please provide the kibana url and press Search")
+				return false;
+			}
+			else
+			{	
+				console.log(testCases[0]["_source"]["ScenarioName"])
+				var json= testCases[0]["_source"]["InputJSON"];
+				$("#nodeSelectBox").show();
+				testEndPoint(endpoint1, json ,"endpoint1");
+				testEndPoint(endpoint2, json ,"endpoint2");
+			}
 		});
 	};
 
@@ -450,7 +386,7 @@ Transamerica.ARIESRegression = (function() {
 				return;
 			}
 			selectedProduct = value;
-
+			$("#kibanaBox").show();
 
 			//change this when move to company domain	
 			var kibanaUrl = "https://search-scenarios-llsguds6zuyl7hl4gfsomx4pxi.us-west-2.es.amazonaws.com/_plugin/kibana/#/discover?_g=(refreshInterval:(display:Off,pause:!f,section:0,value:0),time:(from:now-30d,mode:quick,to:now))&_a=(columns:!(_source),\
@@ -461,18 +397,26 @@ index:"+value.toLowerCase()+",interval:auto,query:(query_string:(analyze_wildcar
 			
 		});
 
-		$("#kibana_url").on( "change", function(){
+		$("#search").click(function(){
 			if(selectedProduct === ""){
 				$.notify("Please select a product");
 			}else{
-				var value = $(this).val();
+				var value = $("#kibana_url").val();
+				var splitTerms = value.split("),");
+				var queryStatement  = [];
+				var len = splitTerms.length;
+				for(var i = 0 ; i < len ; i++){
+					if(splitTerms[i].includes("query:(match:(")){
+				  queryStatement.push(splitTerms[i]);
 
+				  }
+				}
+				console.log(splitTerms);
 				//take out query 
 				var tableName = selectedProduct.toLowerCase();
 				var baseURl = "https://m7kx722wp8.execute-api.us-west-2.amazonaws.com/prod/gettestcasesfromkibanaurl";
-				var url = baseURl + "?tableName=" + tableName + "&url=" +encodeURIComponent(value.replace(",","")); 
-
-				AjaxCall(url, "", "GET" );
+				var url = baseURl + "?tableName=" + tableName + "&url="+queryStatement.join();
+				AjaxCall(url, "", "GET",displayCases );
 
 			}
 		});
