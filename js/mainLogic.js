@@ -75,37 +75,38 @@ Transamerica.ARIESRegression = (function() {
 		//the reason I moved the code is closure in JS is only created inside function
 		//refer to http://www.w3schools.com/js/js_function_closures.asp
 		var url1  = getMyTranswareServiceURL($("#endpoint1").val(),inputJSON);
-		console.log(url1);
 		var url2  = getMyTranswareServiceURL($("#endpoint2").val(),inputJSON);
 
 		var row = $("#"+scenarioID);
 
 		outputs[scenarioID] = {};
 		//send 2 ajax requests in order in the same ajax call - do not refactor
-		AjaxCallCORS(url1,"","GET", function(data){
+		Transamerica.Utils.AjaxCallCORS(url1,"","GET", function(data){
+
 			outputs[scenarioID]["version1"] = {};
 			outputs[scenarioID]["version1"]["response"] = JSON.parse(data);
 
-			AjaxCallCORS(url2,"","GET", function(data){
+			Transamerica.Utils.AjaxCallCORS(url2,"","GET", function(data){
 
+				//store output from myTW
 				outputs[scenarioID]["version2"] = {};
 				outputs[scenarioID]["version2"]["response"] = JSON.parse(data);
 				
-
 				var version1 = outputs[scenarioID]["version1"]["response"];
 				var version2 = outputs[scenarioID]["version2"]["response"];
 				
+				//object for storing comparison data
 				outputs[scenarioID]["version1"]["selectedKeyOutputs"] = {};
 				outputs[scenarioID]["version2"]["selectedKeyOutputs"] = {};
 
-				if(version1 != null & version2 != null){
-					if(version1.ErrorCode == 0 & version2.ErrorCode == 0 ){
-					   //start compare
-						var len = selectedNodes.length; //for each selected key
-						var outputString = "";
-						var tds = "";
+				var len = selectedNodes.length;
+				var outputString = "";
+				var tds = "";				
 
-						var finalResults = true;
+				if(version1 != null & version2 != null){
+					if(version1.ErrorCode !== 9 & version2.ErrorCode !== 9 ){
+					   //start compare
+						var finalResult = true;
 
 						for(var j =0; j< len; j++){
 						   var currentNode = selectedNodes[j];
@@ -117,19 +118,30 @@ Transamerica.ARIESRegression = (function() {
 						   outputs[scenarioID]["version2"]["selectedKeyOutputs"][currentNode] = version2Values;
 
 						   var result = compareTwoNodes(version1Values,version2Values)
-						   if(result == false){ // if the output of any key is failing -> final result should fail
-						   		finalResults = false;
+						   if(result === false){ 
+						   		finalResult = false;
 						   }
-						   outputString ="<span class='glyphicon glyphicon-stop' style='color:"+ (result == true ? "green" : "red") +"'></span> ";
-						   tds += "<td>"+outputString+"</td>";
-						}	
+						   outputString =`<span class='glyphicon glyphicon-stop' style="color:`+colorCode(result)+`"></span>`;
+						   tds += `<td>${outputString}</td>`;
+						}
+						tds += `<td style="color:`+colorCode(finalResult)+`">${finalResult === true ? "PASS" : "FAIL" }</td>`
 						row.append($(tds));
 					}
-				   else{
-					   //print out which version has error
+				   	else if(version1.ErrorCode === 9 || version2.ErrorCode === 9 ){
+						for(var j =0; j< len; j++){
+						   var currentNode = selectedNodes[j];						   
+						   outputString =`<span class='glyphicon glyphicon-stop' style="color:red"></span>`;
+						   tds += `<td>${outputString}</td>`;
+						}
+						var message = version1.ErrorCode === 9 ? "ENDPOINT A returns an Error Message : " + version1.Messages :  "ENDPOINT B returns an Error Message : " + version2.Messages;
+						if(version1.ErrorCode === 9 && version2.ErrorCode === 9 ){
+							message = "BOTH ENDPOINTS RETURN ERROR. ENDPOINT A: " + version1.Messages + "| ENDPOINT B :" + version2.Messages;
+						}
+						tds += `<td style="color:red">FAIL</td><td>${message}</td>`
+						row.append($(tds));
 				   }
 				}else{
-				   //print out Error/ both end points
+				   $.notify("No Data Received From Endpoint" +  version1 != null ? $("#endpoint1").val() : $("#endpoint2").val());
 				}
 			});
 		});
@@ -137,6 +149,14 @@ Transamerica.ARIESRegression = (function() {
 		//update global object
 		Transamerica.ARIESRegression.outputs = outputs;
 	};
+
+	var colorCode = function(bool){
+		if(bool === true){
+			return "green";
+		}else{
+			return "red";
+		}
+	}
 
 	var getValueForNode = function(grandObj, nodeString){
 		var nodes  = nodeString.split(".");
@@ -196,73 +216,6 @@ Transamerica.ARIESRegression = (function() {
 		}
 	};
 	
-	//AJAX
-	var  AjaxCallCORS = function(url, data, type, callback,errorcallback)
-	{
-		$.ajax(
-		{
-			contentType : 'application/json; charset=utf-8',
-			url : url,
-			type: type,
-			data : data,
-			dataType: 'jsonp',
-			crossDomain: true,
-			success : function(d)
-			{
-				if(callback != null)
-				{
-					callback(d);
-				}
-				else
-				{
-					console.log("no callback provided");
-					console.log(d);
-				}
-			},
-			error: function ( data){
-				if(data.status == 404){
-					if(errorcallback != undefined){
-						errorcallback(data);
-					}
-				}
-
-			} 
-		});
-	};
-	
-	var  AjaxCall = function(url, data, type, callback, errorcallback)
-	{
-		console.log(url);
-		$.ajax(
-		{
-			contentType : 'application/json; charset=utf-8',
-			url : url,
-			type: type,
-			data : data,
-			dataType: 'json',
-			success : function(d)
-			{
-				if(callback != null)
-				{
-					callback(d);
-				}
-				else
-				{
-					console.log("no callback provided");
-					console.log(d);
-				}
-			},
-			error: function ( data){
-				if(data.status == 404){
-					if(errorcallback != undefined){
-						errorcallback(data);
-					}
-				}
-
-			} 
-		});
-	};
-	
 	var getMyTranswareServiceURL = function(endpoint,caseJSON){
 		var calServiceUrl = endpoint;
 		var paramString = JSON.stringify(caseJSON);
@@ -301,6 +254,68 @@ Transamerica.ARIESRegression = (function() {
 			buildScenarioTable();
 		});	
 	}
+	var searchCases = function(){
+
+		if(selectedProduct === ""){
+				$.notify("Please select a product");
+		}
+		else
+		{
+			var value = $("#kibana_url").val();
+			var splitTerms = value.split("),");
+			var queryStatement  = [];
+			var len = splitTerms.length;
+			for(var i = 0 ; i < len ; i++){
+				if(splitTerms[i].includes("query:(match:(")){
+			  queryStatement.push(splitTerms[i]);
+
+			  }
+			}
+			//take out query 
+			var tableName = selectedProduct.toLowerCase();
+			var baseURl = "https://m7kx722wp8.execute-api.us-west-2.amazonaws.com/prod/gettestcasesfromkibanaurl";
+			var url = baseURl + "?tableName=" + tableName + "&url="+queryStatement.join();
+			Transamerica.Utils.AjaxCall(url, "", "GET",displayCases );
+		}
+	};
+
+	var validateKibanaUrl = function(){
+			var kibana_url = $("#kibana_url");
+   			var value = kibana_url.val();
+   			var valid = true;
+   			const regex = /(index:[^,]+)/g;
+   			var name;
+   			var matchArray = regex.exec(value);
+
+   			if(value == ""){
+   				$.notify(`Please provide a kibana url for ${selectedProduct} ! `);
+   				return false;
+   			}
+
+   			if(matchArray !== null){
+   				for(var i = 0; i < matchArray.length;i++){
+   					var k = matchArray[i].split(":");
+   					if(k.length == 2) {   						
+   						name = k[1];
+   						break;
+   					}else{
+   						continue;
+   					}
+   				}
+   				if(name  !== selectedProduct.toLowerCase()){
+   					$.notify(`This  kibana url is not for ${selectedProduct} ! `);
+   					$(this).val("");
+   					valid = false;
+   				}else{
+   					valid = true;
+   				}
+   			}else{
+   				$.notify(`This kibana url is not for ${selectedProduct} !`);
+   				$(this).val("");
+   				valid = false;
+   			}
+			return valid;
+   		};
 
 	//public
 	var initialize = function (){
@@ -315,18 +330,16 @@ Transamerica.ARIESRegression = (function() {
 				alert("Please select node to compare");
 				return false;
 			}
-
 			var testCasestbody = $("#testCases");
 			testCasestbody.empty();
 			buildScenarioTable();
-
 			var thead = $("#tableTitle");
 			thead.empty();
 			var header = "<tr><th>No</th><th>Name</th>";
 			for(var o = 0 ; o < selectedNodesArray.length; o++){
 				header += "<th>"+ selectedNodesArray[o] +"</th>";
 			}
-			header = header + "</tr>";
+			header += "<th>Final Result</th></tr>";
 			thead.append($(header));
 			compareTwoEndPoints();
 		});
@@ -363,10 +376,20 @@ Transamerica.ARIESRegression = (function() {
 	            isSameSystem = false;
 	        }
    		});
+
+   		$("#search").click(function(){
+   			if(validateKibanaUrl()){
+   				$.notify(`Getting test cases for ${selectedProduct} ! `, "success");
+   				searchCases();
+   			};		
+   		});
 	};
+	var updateProduct = function(value){
+		selectedProduct = value;
+		$("#productTitle").text(value);
+	}
 
 	var loadProducts = function(selectBoxId){
-
 		selectBox = $("#productSelect");
 		var  i = 0;
 		for(i; i < products.length; i++){
@@ -379,12 +402,9 @@ Transamerica.ARIESRegression = (function() {
 				$("#productTitle").text("Please select a product !");
 				return;
 			}
-			selectedProduct = value;
+			updateProduct(value);
+			$("#kibana_url").val("");
 			$("#kibanaBox").show();
-
-			//change this when move to company domain	
-			$("#productTitle").text(selectedProduct);
-			
 		});
 
 		$("#redirectKibana").click(function(){
@@ -392,36 +412,11 @@ Transamerica.ARIESRegression = (function() {
 				$.notify("Please Select A Product");
 				return false;
 			}
-			var kibanaUrl = "https://search-scenarios-llsguds6zuyl7hl4gfsomx4pxi.us-west-2.es.amazonaws.com/_plugin/kibana/#/discover?_g=(refreshInterval:(display:Off,pause:!f,section:0,value:0),time:(from:now-30d,mode:quick,to:now))&_a=(columns:!(_source),\
-index:"+selectedProduct.toLowerCase()+",interval:auto,query:(query_string:(analyze_wildcard:!t,query:'*')),sort:!(ComparisonLog.endTime,desc))";
+			var index = selectedProduct.toLowerCase();
+			var kibanaUrl = `https://search-scenarios-llsguds6zuyl7hl4gfsomx4pxi.us-west-2.es.amazonaws.com/_plugin/kibana/#/discover?_g=(refreshInterval:(display:Off,pause:!f,section:0,value:0),time:(from:now-30d,mode:quick,to:now))&_a=(columns:!(_source),\
+index:${index},interval:auto,query:(query_string:(analyze_wildcard:!t,query:'*')),sort:!(ComparisonLog.endTime,desc))`;
 			window.open(kibanaUrl);
 		});
-
-		$("#search").click(function(){
-			if(selectedProduct === ""){
-				$.notify("Please select a product");
-			}else{
-				var value = $("#kibana_url").val();
-				var splitTerms = value.split("),");
-				var queryStatement  = [];
-				var len = splitTerms.length;
-				for(var i = 0 ; i < len ; i++){
-					if(splitTerms[i].includes("query:(match:(")){
-				  queryStatement.push(splitTerms[i]);
-
-				  }
-				}
-				console.log(splitTerms);
-				//take out query 
-				var tableName = selectedProduct.toLowerCase();
-				var baseURl = "https://m7kx722wp8.execute-api.us-west-2.amazonaws.com/prod/gettestcasesfromkibanaurl";
-				var url = baseURl + "?tableName=" + tableName + "&url="+queryStatement.join();
-				AjaxCall(url, "", "GET",displayCases );
-
-			}
-		});
-
-
 	};
 	return {
 		loadProducts : loadProducts,
