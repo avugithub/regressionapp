@@ -1,11 +1,10 @@
-var Transamerica = Transamerica || {};
+
 
 Transamerica.ARIESRegression = (function() {
 	//private 
 	var selectedProduct = "";
 	var products = ["FEBII", "ACCUMIULr" ,"FFIULII", "IUL09", "LB201701", "Super201701"];
-	var outputNodes = [];
-	var selectedNodes = { "endpoint1": [], "endpoint2":[]};
+	var selectedNodes = [];
 	var outputs = {};	
 	var testCases = [];
 	var isSameSystem = true;
@@ -15,22 +14,25 @@ Transamerica.ARIESRegression = (function() {
 		if(Array.isArray(response) == false){
 			table.notify("No Test Case Received For the Given Query Url");
 		}else{
-			var tbody = $("#testCases");
-			tbody.empty();
 			testCases = [];
 			testCases = response;
-			var num = response.length;
-			var i;
-			for (i =0 ; i < num; i++ ){
-				var row = $("<tr id="+response[i]["_source"]["ScenarioGuid"]+"><td>"+(i+1)+
-					"</td><td>"+response[i]["_source"]["ScenarioName"] +
-					"</tr>");
-				tbody.append(row);
-			}
-			$("#num_cases").html("( num: " + response.length + " cases)");
+			buildScenarioTable();
 		}
 	};
 
+	var buildScenarioTable = function (){
+		var tbody = $("#testCases");
+		tbody.empty();
+		var num = testCases.length;
+		var i;
+		for (i =0 ; i < num; i++ ){
+			var row = $("<tr id="+testCases[i]["_source"]["ScenarioGuid"]+"><td>"+(i+1)+
+				"</td><td>"+testCases[i]["_source"]["ScenarioName"] +
+				"</tr>");
+			tbody.append(row);
+		}
+		$("#num_cases").html("( num: " + testCases.length + " cases)");
+	}
 
 	var getAllkeys = function(obj)
 	{
@@ -90,18 +92,21 @@ Transamerica.ARIESRegression = (function() {
 				if(version1 != null & version2 != null){
 					if(version1.ErrorCode == 0 & version2.ErrorCode == 0 ){
 					   //start compare
-						var len = selectedNodes["endpoint1"].length; //for each selected key
+						var len = selectedNodes.length; //for each selected key
 						var outputString = "";
 						var tds = "";
 						for(var j =0; j< len; j++){
-						   var currentNode1 = selectedNodes["endpoint1"][j];
-						   var currentNode2 = selectedNodes["endpoint2"][j];
-						   console.log(currentNode1 , currentNode2)
-						   var version1Values = getValueForNode(version1,currentNode1);
-						   var version2Values = getValueForNode(version2,currentNode2);
+						   var currentNode = selectedNodes[j];					  
+						   console.log("Selected Nodes: ", currentNode);
+						   var version1Values = getValueForNode(version1,currentNode);
+						   var version2Values = getValueForNode(version2,currentNode);
 						   var result = compareTwoNodes(version1Values,version2Values)
-						   result =  result == true ? "green" : "red";
-						   outputString ="<span class='glyphicon glyphicon-stop' style='color:"+result +"'></span> ";
+						   if(result == false){
+
+						   }else{
+
+						   }
+						   outputString ="<span class='glyphicon glyphicon-stop' style='color:"+ (result == true ? "green" : "red") +"'></span> ";
 						   tds += "<td>"+outputString+"</td>";
 						}	
 						row.append($(tds));
@@ -241,48 +246,6 @@ Transamerica.ARIESRegression = (function() {
 		});
 	};
 	
-	var displaySchema = function (data, endpointDOMId) {
-		var parsedData = JSON.parse(data);
-		var errorCode = parsedData.ErrorCode;
-		console.log(parsedData);
-		if(errorCode == 0)
-		{
-			var selectBox = $("#"+endpointDOMId+"Select");
-			var Quote = parsedData.Quote;
-			var Illustration = parsedData.Illustration;
-			outputNodes = getAllkeys(parsedData);
-			var len = outputNodes.length;
-			var  i = 0;
-			for(i; i < len; i++){
-				var option = $("<option val="+outputNodes[i]+">"+outputNodes[i]+"</option>");
-				selectBox.append(option);
-			}
-			selectBox.select2(); // make select box searchable
-			selectBox.change(function(){
-				//add selected nodes to an array
-				var value = selectBox.val();
-				if(value != ""){
-					selectedNodes[endpointDOMId].push(value);
-					displaySelectedNode("selected_nodes_" + endpointDOMId,selectedNodes[endpointDOMId]);
-				}else{
-					return;
-				}
-			});
-
-			$("#clear_"+endpointDOMId).click(function(){
-					selectedNodes[endpointDOMId] = [];
-					var tbody = $("#selected_nodes_" + endpointDOMId);
-					tbody.empty();
-					
-			});
-		}
-		else if(errorCode == null || errorCode!=0)
-		{
-			//TODO : customize this for each url
-			$("#notification").html("<h4 style='color:red'>Error! Error: " + parsedData.Messages + "</h4>");
-		}
-	}
-
 	var getMyTranswareServiceURL = function(endpoint,caseJSON){
 		var calServiceUrl = endpoint;
 		var paramString = JSON.stringify(caseJSON);
@@ -291,52 +254,60 @@ Transamerica.ARIESRegression = (function() {
 		var url = endpoint + "?key=f19d590dcc2b" + "&configuration=&jsWebIllustration=" + paramString;
 		return url;
 	};
-	
-	var testEndPoint = function(endpoint, sampleJSON, endpointDOMId){
-		var url = getMyTranswareServiceURL(endpoint,sampleJSON);
-		var callback = function(data){
-			displaySchema(data, endpointDOMId);
+
+	var fillSelectBox = function(){
+		var selectBox = $("#endpointSelect");
+		var myTWNodes = Transamerica.Globals.myTWJSONkeys;
+		var len = myTWNodes.length;
+		var  i = 0;
+		for(i; i < len; i++){
+			var option = $("<option val="+myTWNodes[i]+">"+myTWNodes[i]+"</option>");
+			selectBox.append(option);
 		}
-		var errorcallback = function(data){
-			console.log(data);
-			$.notify("Status : "+ data.status+" !No response received from !" + $("#"+endpointDOMId).val());
-			$("#nodeSelectBox").hide();
-		}
-		if(url.includes("http")){
-			AjaxCallCORS(url,"","GET",callback,errorcallback);
-		}else if(url.includes("https")){
-			AjaxCall(url,"","GET",callback,errorcallback);
-		}else{
-			var newUrl = "http://" + url;
-			AjaxCallCORS(newUrl,"","GET",callback,errorcallback);
-			$("#"+endpointDOMId).val("http://"+ endpoint);
-		}
+		selectBox.select2();
+		selectBox.change(function(){
+				//add selected nodes to an array
+				var value = selectBox.val();
+				if(value != ""){
+					selectedNodes.push(value);
+					displaySelectedNode("selected_nodes_tbody", selectedNodes);
+				}else{
+					return;
+				}
+		});
+		$("#clear_endpoint").click(function(){
+			selectedNodes = [];
+			var tbody = $("#selected_nodes_tbody");
+			var testCasestbody = $("#testCases");
+			testCasestbody.empty();
+			tbody.empty();
+			buildScenarioTable();
+		});	
 	}
 
 	//public
 	var initialize = function (){
+		fillSelectBox();
 		$("#nodeSelectBox").hide();
 		$("#kibanaBox").hide();
-		$("#compare").click(function(){
-			var selectedNodesArray1 = selectedNodes["endpoint1"];
-			var selectedNodesArray2 = selectedNodes["endpoint2"];
 
+		$("#compare").click(function(){
+			var selectedNodesArray = selectedNodes;
 			//validation
-			if(selectedNodesArray1.length == 0 && selectedNodesArray2.length == 0){
-				alert("Please select node for both end points");
+			if(selectedNodesArray.length == 0){
+				alert("Please select node to compare");
 				return false;
 			}
-			else if(selectedNodesArray1.length != selectedNodesArray2.length)
-			{
-				alert("Can't compare ! Make sure the number of selected nodes for both endpoints are the same");
-				return false;
-			}
+
+			var testCasestbody = $("#testCases");
+			testCasestbody.empty();
+			buildScenarioTable();
 
 			var thead = $("#tableTitle");
 			thead.empty();
 			var header = "<tr><th>No</th><th>Name</th>";
-			for(var o = 0 ; o < selectedNodesArray1.length; o++){
-				header += "<th>"+ selectedNodesArray1[o] + " vs "+ selectedNodesArray2[o]+"</th>";
+			for(var o = 0 ; o < selectedNodesArray.length; o++){
+				header += "<th>"+ selectedNodesArray[o] +"</th>";
 			}
 			header = header + "</tr>";
 			thead.append($(header));
@@ -359,15 +330,12 @@ Transamerica.ARIESRegression = (function() {
 			{	
 				//do this for if the systems are different
 				//actually get a case that is currently passing 
-				var json= testCases[0]["_source"]["InputJSON"];
-				$("#nodeSelectBox").show();
-				testEndPoint(endpoint1, json ,"endpoint1");
-				testEndPoint(endpoint2, json ,"endpoint2");
 			}else if(isSameSystem === true)
 			{
-				
+				$("#nodeSelectBox").show();
 			}
 		});
+
 		$('input[type=radio][name=sameSystem]').change(function() {
 	        if (this.value == 'yes') 
 	        {
