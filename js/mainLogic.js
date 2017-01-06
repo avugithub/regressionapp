@@ -75,19 +75,28 @@ Transamerica.ARIESRegression = (function() {
 		//the reason I moved the code is closure in JS is only created inside function
 		//refer to http://www.w3schools.com/js/js_function_closures.asp
 		var url1  = getMyTranswareServiceURL($("#endpoint1").val(),inputJSON);
+		console.log(url1);
 		var url2  = getMyTranswareServiceURL($("#endpoint2").val(),inputJSON);
+
 		var row = $("#"+scenarioID);
 
 		outputs[scenarioID] = {};
 		//send 2 ajax requests in order in the same ajax call - do not refactor
 		AjaxCallCORS(url1,"","GET", function(data){
-			outputs[scenarioID]["version1"] = JSON.parse(data);
+			outputs[scenarioID]["version1"] = {};
+			outputs[scenarioID]["version1"]["response"] = JSON.parse(data);
+
 			AjaxCallCORS(url2,"","GET", function(data){
-				outputs[scenarioID]["version2"] = JSON.parse(data);
-				outputs[scenarioID]["results"] = {};
-				var version1 = outputs[scenarioID]["version1"];
-				var version2 = outputs[scenarioID]["version2"];
+
+				outputs[scenarioID]["version2"] = {};
+				outputs[scenarioID]["version2"]["response"] = JSON.parse(data);
 				
+
+				var version1 = outputs[scenarioID]["version1"]["response"];
+				var version2 = outputs[scenarioID]["version2"]["response"];
+				
+				outputs[scenarioID]["version1"]["selectedKeyOutputs"] = {};
+				outputs[scenarioID]["version2"]["selectedKeyOutputs"] = {};
 
 				if(version1 != null & version2 != null){
 					if(version1.ErrorCode == 0 & version2.ErrorCode == 0 ){
@@ -95,16 +104,21 @@ Transamerica.ARIESRegression = (function() {
 						var len = selectedNodes.length; //for each selected key
 						var outputString = "";
 						var tds = "";
+
+						var finalResults = true;
+
 						for(var j =0; j< len; j++){
-						   var currentNode = selectedNodes[j];					  
-						   console.log("Selected Nodes: ", currentNode);
+						   var currentNode = selectedNodes[j];
 						   var version1Values = getValueForNode(version1,currentNode);
 						   var version2Values = getValueForNode(version2,currentNode);
+
+						   //store the  values for current node so we can display later
+						   outputs[scenarioID]["version1"]["selectedKeyOutputs"][currentNode] = version1Values;
+						   outputs[scenarioID]["version2"]["selectedKeyOutputs"][currentNode] = version2Values;
+
 						   var result = compareTwoNodes(version1Values,version2Values)
-						   if(result == false){
-
-						   }else{
-
+						   if(result == false){ // if the output of any key is failing -> final result should fail
+						   		finalResults = false;
 						   }
 						   outputString ="<span class='glyphicon glyphicon-stop' style='color:"+ (result == true ? "green" : "red") +"'></span> ";
 						   tds += "<td>"+outputString+"</td>";
@@ -119,6 +133,9 @@ Transamerica.ARIESRegression = (function() {
 				}
 			});
 		});
+
+		//update global object
+		Transamerica.ARIESRegression.outputs = outputs;
 	};
 
 	var getValueForNode = function(grandObj, nodeString){
@@ -408,7 +425,8 @@ index:"+selectedProduct.toLowerCase()+",interval:auto,query:(query_string:(analy
 	};
 	return {
 		loadProducts : loadProducts,
-		initialize: initialize
+		initialize: initialize,
+		outputs:outputs // for testing - remove 
 	};
 })();
 
