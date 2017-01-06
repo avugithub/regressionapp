@@ -1,0 +1,61 @@
+        <div class="row" id="nodeSelectBox">
+            <center>
+                <h3>JSON Schema Of the Response</h3>
+            </center>
+            <div>
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label for="endpoint1Select" class="control-label col-sm-4">Nodes For Endpoint A</label>
+                        <div class="col-sm-6">
+                            <select id="endpoint1Select" class="form-control">
+                                <option default></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="endpoint2Select" class="control-label col-sm-4">Nodes For Endpoint B</label>
+                        <div class="col-sm-6">
+                            <select id="endpoint2Select" class="form-control">
+                                <option default></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-offset-2 col-sm-8">
+                            <button type="button" class="btn btn-primary" id="compare">Compare</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div>
+                <center>
+                    <h4>Selected Keys</h4>
+                </center>
+                <div class="col-sm-6">
+                    <center>
+                        <tr>
+                            <th>Endpoint A</th>
+                        </tr>
+                    </center>
+                    <button type="button" class="btn btn-danger" id="clear_endpoint1">Clear</button>
+                    <br>
+                    <br>
+                    <table class="table">
+                        <tbody id="selected_nodes_endpoint1"></tbody>
+                    </table>
+                </div>
+                <div class="col-sm-6">
+                    <center>
+                        <tr>
+                            <th>Endpoint B</th>
+                        </tr>
+                    </center>
+                    <button type="button" class="btn btn-danger" id="clear_endpoint2">Clear</button>
+                    <br>
+                    <br>
+                    <table class="table">
+                        <tbody id="selected_nodes_endpoint2"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
