@@ -3,11 +3,12 @@
 Transamerica.ARIESRegression = (function() {
 	//private 
 	var selectedProduct = "";
-	var products = ["FEBII", "ACCUMIULr" ,"FFIULII", "IUL09", "LB201701", "Super201701"];
+	const products = ["FEBII", "ACCUMIULr" ,"FFIULII", "IUL09", "LB201701", "Super201701"];
 	var selectedNodes = [];
 	var outputs = {};	
 	var testCases = [];
 	var isSameSystem = true;
+	var myTWJSONkeys = Transamerica.Globals.myTWJSONkeys;
 
 	var displayCases = function(data){
 		var response = data["response"];
@@ -71,6 +72,12 @@ Transamerica.ARIESRegression = (function() {
 		}		
 	};
 	
+	var errorHandlingCallBack = function(data){
+		$.notify(`The webservice did not send any response back ! Status: ${data.status}`);
+		console.log(data);
+	}
+
+	//COMPARING
 	var processComparison = function(scenarioID, inputJSON){
 		//the reason I moved the code is closure in JS is only created inside function
 		//refer to http://www.w3schools.com/js/js_function_closures.asp
@@ -80,14 +87,18 @@ Transamerica.ARIESRegression = (function() {
 		var row = $("#"+scenarioID);
 
 		outputs[scenarioID] = {};
-		//send 2 ajax requests in order in the same ajax call - do not refactor
+
+		//send 2 ajax requests in order
 		Transamerica.Utils.AjaxCallCORS(url1,"","GET", function(data){
 
 			outputs[scenarioID]["version1"] = {};
 			outputs[scenarioID]["version1"]["response"] = JSON.parse(data);
+			row.append($("<td><span class='glyphicon glyphicon-stop' style='color:green'></span></td>"));
 
 			Transamerica.Utils.AjaxCallCORS(url2,"","GET", function(data){
 
+				row.append($("<td><span class='glyphicon glyphicon-stop' style='color:green'></span></td>"));
+				
 				//store output from myTW
 				outputs[scenarioID]["version2"] = {};
 				outputs[scenarioID]["version2"]["response"] = JSON.parse(data);
@@ -113,10 +124,11 @@ Transamerica.ARIESRegression = (function() {
 						   var version1Values = getValueForNode(version1,currentNode);
 						   var version2Values = getValueForNode(version2,currentNode);
 
-						   //store the  values for current node so we can display later
+						   //cache the  values for current node so we can display later
 						   outputs[scenarioID]["version1"]["selectedKeyOutputs"][currentNode] = version1Values;
 						   outputs[scenarioID]["version2"]["selectedKeyOutputs"][currentNode] = version2Values;
 
+						   console.log(`Comparing : (${currentNode})`, version1Values, version2Values)
 						   var result = compareTwoNodes(version1Values,version2Values)
 						   if(result === false){ 
 						   		finalResult = false;
@@ -143,8 +155,14 @@ Transamerica.ARIESRegression = (function() {
 				}else{
 				   $.notify("No Data Received From Endpoint" +  version1 != null ? $("#endpoint1").val() : $("#endpoint2").val());
 				}
-			});
-		});
+			},function(data){ 
+							$.notify(" ENDPOINT 2 - ERROR : Got error from the webervice. Status: "+ data.status);
+							row.append($("<td><span class='glyphicon glyphicon-stop' style='color:red'></span></td>"));
+				});
+		},function(data){ 
+							$.notify("ENDPOINT 1 - ERROR : Got error from the webervice. Status: "+ data.status);
+							row.append($("<td><span class='glyphicon glyphicon-stop' style='color:red'></span></td>"));
+				});
 
 		//update global object
 		Transamerica.ARIESRegression.outputs = outputs;
@@ -169,7 +187,6 @@ Transamerica.ARIESRegression = (function() {
 	
 	var compareTwoNodes = function(obj1 , obj2)
 	{
-		console.log("Comparing :" , obj1, obj2)
 		var result = true; 
 		if(obj1 instanceof Array == true){
 			if(obj1.len == obj2.len){
@@ -227,7 +244,7 @@ Transamerica.ARIESRegression = (function() {
 
 	var fillSelectBox = function(){
 		var selectBox = $("#endpointSelect");
-		var myTWNodes = Transamerica.Globals.myTWJSONkeys;
+		var myTWNodes = myTWJSONkeys;
 		var len = myTWNodes.length;
 		var  i = 0;
 		for(i; i < len; i++){
@@ -335,7 +352,7 @@ Transamerica.ARIESRegression = (function() {
 			buildScenarioTable();
 			var thead = $("#tableTitle");
 			thead.empty();
-			var header = "<tr><th>No</th><th>Name</th>";
+			var header = "<tr class='info'><th>No</th><th>Name</th><th>Endpoint 1</th><th>Endpoint 2</th>";
 			for(var o = 0 ; o < selectedNodesArray.length; o++){
 				header += "<th>"+ selectedNodesArray[o] +"</th>";
 			}
@@ -349,7 +366,7 @@ Transamerica.ARIESRegression = (function() {
 			var endpoint2 = $("#endpoint2").val();
 
 			if(endpoint1 === "" || endpoint2 === ""){
-				alert("One of the end point is left blank !");
+				$.notify("Please provide 2 endpoints to compare");
 				return false;
 			}
 			if(testCases.length == 0){
