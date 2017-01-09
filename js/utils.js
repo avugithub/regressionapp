@@ -2,13 +2,11 @@ Transamerica.Utils = (function(){
 	var changePriorityOne = function (ScenarioGuid, comparisonResult) {
 		try {
 			var baseURl = "http://ladbsqldev02/App5/Services/SHARPAriesAutoTestCacheService.asmx/DoCOMUpdateScenarioPriority";
-			var value = "Low";
+			var value = "NotSet"; // NotSet = Normal
 		    if (comparisonResult === false) {
 		    	value = "High";
 		    }
-		    else{
-		    	value = "Low"; 
-		    }
+		    
 		    var url = baseURl + "?systemID=" + "1" + "&scenarioGUID=" + ScenarioGuid + "&priorityCode=" + value  + "&userID=" + "RBEWERNI";
             $.ajax({
 		        type: "POST",

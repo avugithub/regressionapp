@@ -136,6 +136,7 @@ Transamerica.ARIESRegression = (function() {
 						   outputString =`<span class='glyphicon glyphicon-stop' style="color:`+colorCode(result)+`"></span>`;
 						   tds += `<td>${outputString}</td>`;
 						}
+						Transamerica.Utils(finalResult);
 						tds += `<td style="color:`+colorCode(finalResult)+`">${finalResult === true ? "PASS" : "FAIL" }</td>`
 						row.append($(tds));
 					}
