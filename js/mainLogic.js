@@ -13,7 +13,7 @@ Transamerica.ARIESRegression = (function() {
 	var displayCases = function(data){
 		var response = data["response"];
 		if(Array.isArray(response) == false){
-			table.notify("No Test Case Received For the Given Query Url");
+			$.notify("No Test Case Received For the Given Query Url");
 		}else{
 			testCases = [];
 			testCases = response;
@@ -28,7 +28,7 @@ Transamerica.ARIESRegression = (function() {
 		var i;
 		for (i =0 ; i < num; i++ ){
 			var row = $("<tr id="+testCases[i]["_source"]["ScenarioGuid"]+"><td>"+(i+1)+
-				"</td><td>"+testCases[i]["_source"]["ScenarioName"] +
+				"</td><td class='ScenarioName'>"+testCases[i]["_source"]["ScenarioName"] +
 				"</tr>");
 			tbody.append(row);
 		}
@@ -92,19 +92,14 @@ Transamerica.ARIESRegression = (function() {
 		Transamerica.Utils.AjaxCallCORS(url1,"","GET", function(data){
 
 			outputs[scenarioID]["version1"] = {};
-			outputs[scenarioID]["version1"]["response"] = JSON.parse(data);
+			var version1 = JSON.parse(data);
 			row.append($("<td><span class='glyphicon glyphicon-stop' style='color:green'></span></td>"));
 
 			Transamerica.Utils.AjaxCallCORS(url2,"","GET", function(data){
 
 				row.append($("<td><span class='glyphicon glyphicon-stop' style='color:green'></span></td>"));
-				
-				//store output from myTW
 				outputs[scenarioID]["version2"] = {};
-				outputs[scenarioID]["version2"]["response"] = JSON.parse(data);
-				
-				var version1 = outputs[scenarioID]["version1"]["response"];
-				var version2 = outputs[scenarioID]["version2"]["response"];
+				var version2 = JSON.parse(data);
 				
 				//object for storing comparison data
 				outputs[scenarioID]["version1"]["selectedKeyOutputs"] = {};
@@ -136,9 +131,10 @@ Transamerica.ARIESRegression = (function() {
 						   outputString =`<span class='glyphicon glyphicon-stop' style="color:`+colorCode(result)+`"></span>`;
 						   tds += `<td>${outputString}</td>`;
 						}
-						Transamerica.Utils(finalResult);
-						tds += `<td style="color:`+colorCode(finalResult)+`">${finalResult === true ? "PASS" : "FAIL" }</td>`
+
+						tds += `<td style="color:`+colorCode(finalResult)+`">${finalResult === true ? "PASS" : "FAIL" }&nbsp<a id='details_${scenarioID}' style='cursor:pointer'>Details</a></td>`
 						row.append($(tds));
+						rowClickEventHandler(scenarioID);
 					}
 				   	else if(version1.ErrorCode === 9 || version2.ErrorCode === 9 ){
 						for(var j =0; j< len; j++){
@@ -152,7 +148,7 @@ Transamerica.ARIESRegression = (function() {
 						}
 						tds += `<td style="color:red">FAIL</td><td>${message}</td>`
 						row.append($(tds));
-				   }
+				    }
 				}else{
 				   $.notify("No Data Received From Endpoint" +  version1 != null ? $("#endpoint1").val() : $("#endpoint2").val());
 				}
@@ -176,6 +172,13 @@ Transamerica.ARIESRegression = (function() {
 			return "red";
 		}
 	}
+
+	var rowClickEventHandler = function (scenarioId) {
+        $(`#details_${scenarioId}`).click(function () {
+            $("#orderModal").modal("show");
+            Transamerica.Utils.comparisionTable(scenarioId);
+        });
+    };
 
 	var getValueForNode = function(grandObj, nodeString){
 		var nodes  = nodeString.split(".");

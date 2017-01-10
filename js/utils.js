@@ -111,11 +111,50 @@ Transamerica.Utils = (function(){
 		});
 	};
 
+	var comparisionTable = function (scenarioGUID) {
+        $("#testCaseName").html("- Test Case: " + testCaseName);
+        var table = $("#comparisonTable");
+        var outputs = Transamerica.ARIESRegression.outputs;
+        console.log(outputs);
+        table.empty();
+    
+        var num = Object.keys(outputs).length;
+      //  console.log(num);
+
+        // add header 
+
+        table.append($("<thead></thead>"));
+
+
+        var comparedOutputs = outputs[scenarioGUID]["version1"]["selectedKeyOutputs"];
+        for (var key in comparedOutputs) {
+            if (comparedOutputs.hasOwnProperty(key)) {
+           
+                    var tbody = $("<tbody></tbody");
+                    var currentNode = key;
+                    var currentNodeData = comparedOutputs[currentNode];
+                    var currentNodeData2 = outputs[scenarioGUID]["version2"]["selectedKeyOutputs"][currentNode];
+
+                    var len = currentNodeData.length;
+                    var j;
+                    tbody.append($("<tr style='background:yellow;'><td colspan='2'>" + key + "</td></tr>"));
+                    for (j = 0; j < len; j++) {
+
+                        var row = $("<tr><td>" + currentNodeData[j] + "</td>" +
+                            "<td>" + currentNodeData2[j] + " </td>" +
+                            "</tr>");
+                        tbody.append(row);
+                    }                
+                    table.append(tbody);                    
+            }
+        }
+    };
 
 	//export function 
 	return {
 		changePriorityOne : changePriorityOne,
 		AjaxCallCORS : AjaxCallCORS,
-		AjaxCall: AjaxCall
+		AjaxCall: AjaxCall,
+		comparisionTable:comparisionTable
 	}
 })();
