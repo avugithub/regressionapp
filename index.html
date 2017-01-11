@@ -16,12 +16,15 @@
     <script src="js/mainLogic.js"></script>
     <style>
         .modal-body {
-    position: relative;
-    overflow-y: auto;
-    max-height: 400px;
-    padding: 15px;
-}
-        </style>
+        position: relative;
+        overflow-y: auto;
+        max-height: 400px;
+        padding: 15px;
+        }
+        table{
+            cursor: pointer;
+        }
+    </style>
     
 </head>
 
@@ -135,10 +138,10 @@
             </table>
         </center>
     </div>
-    <div id="orderModal" class="modal" role="dialog" aria-labelledby="orderModalLabel" aria-hidden="true">
+    <div id="detailsModal" class="modal" role="dialog" aria-hidden="true">
         <div class="modal-content">
             <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">Close</button>
                 <h4>Output Table <span id="testCaseName"></span> </h4>
             </div>
 
@@ -149,6 +152,26 @@
                     <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
                 </div>
             </div>
+        </div>
+    </div>
+    <div id="searchBox" class= "row">
+        <div class="col-sm-4">
+            <table class="table table-hover" border="1">
+                <thead><tr class="success"><th>Attribute</th></tr></thead>
+                <tbody id="attributeTable"></tbody>
+            </table>
+        </div>
+        <div class="col-sm-4">
+            <table class='table table-hover' border="1">
+                <thead><tr class="warning"><th>Value</th><th colspan="2">Number Of Records</th></tr></thead>
+                <tbody id="distribution"></tbody>
+            </table>
+        </div>
+        <div class="col-sm-4">
+            <table class='table table-hover' border="1">
+                <thead><tr class="warning"><th>Selected Attribute</th><th>Value</th><th>Include/Exclude</th></tr></thead>
+                <tbody id="attributeSelection"></tbody>
+            </table>
         </div>
     </div>
 </body>
