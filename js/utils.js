@@ -1,4 +1,31 @@
 Transamerica.Utils = (function(){
+	var recordAttributes = {};
+
+	var getAllkeys = function(obj)
+	{
+		//going over all keys until exhausted
+		var keys = [];
+		for (var key in obj)
+		{
+			if (obj.hasOwnProperty(key))
+			{
+				if(typeof(obj[key]) == "object" && obj[key] instanceof Array == false) //if it is an object not array, go down one more level
+				{
+					var subkeys = getAllkeys(obj[key]);
+					var i = 0;
+					var len = subkeys.length;
+					for(i; i < len; i++){
+						keys.push(key+"."+subkeys[i]);
+					}
+				}
+				else
+				{
+					keys.push(key);
+				}
+			}
+		}
+		return keys;
+	};
 	var changePriorityOne = function (ScenarioGuid, comparisonResult) {
 		try {
 			var baseURl = "http://ladbsqldev02/App5/Services/SHARPAriesAutoTestCacheService.asmx/DoCOMUpdateScenarioPriority";
@@ -150,11 +177,102 @@ Transamerica.Utils = (function(){
         }
     };
 
+    var searchCases = function(selectedProduct, url){
+		var value = url;
+		var splitTerms = value.split("),");
+		var queryStatement  = [];
+		var len = splitTerms.length;
+		for(var i = 0 ; i < len ; i++){
+			if(splitTerms[i].includes("query:(match:(")){
+		  queryStatement.push(splitTerms[i]);
+
+		  }
+		} 
+		var tableName = selectedProduct.toLowerCase();
+		var baseURl = "https://m7kx722wp8.execute-api.us-west-2.amazonaws.com/prod/gettestcasesfromkibanaurl";
+		var requestUrl = baseURl + "?tableName=" + tableName + "&url="+queryStatement.join();
+		AjaxCall(requestUrl, "", "GET",displayCases );
+	};
+
+    var  getIndexAttributeDistribution = function(tableName, domContainer){
+    	var requestUrl = "https://m7kx722wp8.execute-api.us-west-2.amazonaws.com/prod/getindexdistribution?tableName=" + tableName; 
+    	AjaxCall(requestUrl, "", "GET",function(data){buildProductIndexAttributes(data,domContainer);});	
+    };
+
+    var buildProductIndexAttributes = function(data){
+
+    	var table = $("#attributeTable");
+    	
+    	if(data.hasOwnProperty("errorMessage")){
+    		//print out the error
+    	}
+    	else{
+    		console.log(data);
+    		var aggregations = data["response"]["aggregations"];
+    		for (var attribute in aggregations){
+    			if(aggregations.hasOwnProperty(attribute)){
+    				var buckets = aggregations[attribute]["buckets"];
+    				var len = buckets.length;
+    				var i;
+    				var row = $("<tr id='"+attribute+"'><td>"+attribute+"</td></tr>");
+    				recordAttributes[attribute] = {  }
+    				for (i = 0; i< len; i++){
+    					recordAttributes[attribute][buckets[i]["key"]] = buckets[i]["doc_count"];
+    				}
+    				rowClickHandler(attribute, row);
+    				table.append(row);
+    			}
+    		}
+    	}
+
+
+    	
+    }
+
+    var rowClickHandler= function(attribute, row){
+    	row.click(function(){
+		    //highlight the row clicked
+		    var selected = $(this).hasClass("highlight");
+    		var values = recordAttributes[attribute];
+    		var tbody = $("#distribution");
+    		tbody.empty();
+    		for(var key in values){
+    			if(values.hasOwnProperty(key)){
+    				var value = key == " " ? "No Data" : key;
+    				var count =  values[key];
+    				var row = $("<tr><td><b>"+value+"</b></td><td>"+count+" records</td><td>"+
+    						"<a class='add'><span class='glyphicon glyphicon-plus' style='color:green'>&nbsp;</span></a><a class='remove'><span style='color:red' class='glyphicon glyphicon-minus'></span></a></td></tr>");
+    				valueSelectHandler(row, attribute, key);
+    				tbody.append(row);
+    					
+    			}
+    		}
+    	});
+    };
+
+    var valueSelectHandler = function (row, attribute, value) {
+    	row.find("a").click(function(){
+    		console.log($(this).attr("class"), attribute, value);
+    		var tbody	= $("#attributeSelection");
+    		var queryType = "Included"
+    		if($(this).attr("class") == "remove"){
+    			queryType = "Excluded"
+    		}
+    		var row = $("<tr><td>"+attribute+"</td><td>"+value+"</td><td>"+queryType+"</td></tr>");
+    		tbody.append(row);
+    	});
+    };
+
+
 	//export function 
 	return {
 		changePriorityOne : changePriorityOne,
 		AjaxCallCORS : AjaxCallCORS,
 		AjaxCall: AjaxCall,
-		comparisionTable:comparisionTable
+		comparisionTable:comparisionTable,
+		getAllkeys: getAllkeys,
+		searchCases : searchCases,
+		getIndexAttributeDistribution: getIndexAttributeDistribution,
+		buildProductIndexAttributes: buildProductIndexAttributes
 	}
 })();

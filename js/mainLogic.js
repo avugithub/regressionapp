@@ -10,6 +10,10 @@ Transamerica.ARIESRegression = (function() {
 	var isSameSystem = true;
 	var myTWJSONkeys = Transamerica.Globals.myTWJSONkeys;
 
+	//save endpoint 1 and 2 
+	// var endpoint1 = "";
+	// var endpoint2 = "";
+
 	var displayCases = function(data){
 		var response = data["response"];
 		if(Array.isArray(response) == false){
@@ -35,31 +39,7 @@ Transamerica.ARIESRegression = (function() {
 		$("#num_cases").html("( num: " + testCases.length + " cases)");
 	}
 
-	var getAllkeys = function(obj)
-	{
-		//going over all keys until exhausted
-		var keys = [];
-		for (var key in obj)
-		{
-			if (obj.hasOwnProperty(key))
-			{
-				if(typeof(obj[key]) == "object" && obj[key] instanceof Array == false) //if it is an object not array, go down one more level
-				{
-					var subkeys = getAllkeys(obj[key]);
-					var i = 0;
-					var len = subkeys.length;
-					for(i; i < len; i++){
-						keys.push(key+"."+subkeys[i]);
-					}
-				}
-				else
-				{
-					keys.push(key);
-				}
-			}
-		}
-		return keys;
-	};
+
 
 	var compareTwoEndPoints = function(){
 		var i = 0;
@@ -175,7 +155,7 @@ Transamerica.ARIESRegression = (function() {
 
 	var rowClickEventHandler = function (scenarioId) {
         $(`#details_${scenarioId}`).click(function () {
-            $("#orderModal").modal("show");
+            $("#detailsModal").modal("show");
             Transamerica.Utils.comparisionTable(scenarioId);
         });
     };
@@ -275,30 +255,7 @@ Transamerica.ARIESRegression = (function() {
 			buildScenarioTable();
 		});	
 	}
-	var searchCases = function(){
 
-		if(selectedProduct === ""){
-				$.notify("Please select a product");
-		}
-		else
-		{
-			var value = $("#kibana_url").val();
-			var splitTerms = value.split("),");
-			var queryStatement  = [];
-			var len = splitTerms.length;
-			for(var i = 0 ; i < len ; i++){
-				if(splitTerms[i].includes("query:(match:(")){
-			  queryStatement.push(splitTerms[i]);
-
-			  }
-			}
-			//take out query 
-			var tableName = selectedProduct.toLowerCase();
-			var baseURl = "https://m7kx722wp8.execute-api.us-west-2.amazonaws.com/prod/gettestcasesfromkibanaurl";
-			var url = baseURl + "?tableName=" + tableName + "&url="+queryStatement.join();
-			Transamerica.Utils.AjaxCall(url, "", "GET",displayCases );
-		}
-	};
 
 	var validateKibanaUrl = function(){
 			var kibana_url = $("#kibana_url");
@@ -401,8 +358,12 @@ Transamerica.ARIESRegression = (function() {
    		$("#search").click(function(){
    			if(validateKibanaUrl()){
    				$.notify(`Getting test cases for ${selectedProduct} ! `, "success");
-   				searchCases();
-   			};		
+   				if(selectedProduct === ""){
+					$.notify("Please select a product");
+				}else{
+					Transamerica.Utils.searchCases(selectedProduct, $("#kibana_url").val());
+				}
+			}	
    		});
 	};
 	var updateProduct = function(value){
