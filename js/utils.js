@@ -1,8 +1,7 @@
 Transamerica.Utils = (function(){
 	var recordAttributes = {};
 	var elasticSearchQueryObj = {
-		"included" : {},
-		"excluded" :{},
+		"attributes": [],
 		"custom_query": ""
 	};
 	var getAllkeys = function(obj)
@@ -204,9 +203,7 @@ Transamerica.Utils = (function(){
     };
 
     var buildProductIndexAttributes = function(data){
-
     	var table = $("#attributeTable");
-    	
     	if(data.hasOwnProperty("errorMessage")){
     		//print out the error
     	}
@@ -232,7 +229,6 @@ Transamerica.Utils = (function(){
 
     	
     }
-
     var rowClickHandler= function(attribute, row){
     	row.click(function(){
 		    //highlight the row clicked
@@ -242,7 +238,7 @@ Transamerica.Utils = (function(){
     		tbody.empty();
     		for(var key in values){
     			if(values.hasOwnProperty(key)){
-    				var value = key == " " ? "No Data" : key;
+    				var value = key;
     				var count =  values[key];
     				var row = $("<tr><td><b>"+value+"</b></td><td>"+count+" records</td><td>"+
     						"<a class='add'><span class='glyphicon glyphicon-plus' style='color:green'>&nbsp;</span></a><a class='remove'><span style='color:red' class='glyphicon glyphicon-minus'></span></a></td></tr>");
@@ -257,29 +253,78 @@ Transamerica.Utils = (function(){
     var valueSelectHandler = function (row, attribute, value) {
     	row.find("a").click(function(){
     		var tbody	= $("#attributeSelection");
-    		var queryType = "included";
+    		var queryType = "include";
     		if($(this).attr("class") == "remove"){
-    				queryType = "excluded"
+    				queryType = "exclude"
 	    	}
-    		if (elasticSearchQueryObj[queryType].hasOwnProperty(attribute))
+    		if (attributeExists(attribute, value))
     		{
     			return false;
     		}
     		else
     		{	
-	    		elasticSearchQueryObj[queryType][attribute] = value;
-	    		var selectedAttributeRow = $("<tr><td>"+attribute+"</td><td>"+value+"</td><td>"+queryType.toUpperCase()+"<a class='removeSelectedAttribute'><span style='color:red' class='glyphicon glyphicon-remove'></span></a></td></tr>");
+	    		elasticSearchQueryObj.attributes.push({name: attribute, value: value , queryType: queryType });
+	    		var selectedAttributeRow = $("<tr><td>"+attribute+"</td><td>"+value+"</td><td>"+queryType.toUpperCase()+
+	    			"<a class='removeSelectedAttribute'>  <span style='color:red' class='glyphicon glyphicon-remove'></span></a></td></tr>");
     			selectedAttributeRow.find("a").click(function(){
     				if($(this).attr("class") == "removeSelectedAttribute")
     				{
     					selectedAttributeRow.remove();
-    					delete elasticSearchQueryObj[queryType][attribute];
+    					removeAttribute(attribute, value);
     				}
     			});
     			tbody.append(selectedAttributeRow);
     		}
     	});
     };
+
+    var removeAttribute = function (attribute,  value ) {
+    	var	attArr =  elasticSearchQueryObj.attributes;
+    	for (var i = 0; i < attArr.length; i++) {
+    		if(attArr[i].name === attribute && attArr[i].value === value){
+    			elasticSearchQueryObj.attributes.splice(i, 1);
+    			return;
+    		}
+    	}
+    }
+
+    var attributeExists = function (attribute, value) {
+    	var attArr = elasticSearchQueryObj.attributes;
+    	var obj = attArr.filter(function(x){ return (x.name === attribute && x.value === value); });
+    	if(obj.length === 0)
+    	{
+    		return false;
+    	}
+    	else
+    	{
+    		return true;
+    	}
+    }
+
+
+
+
+    var buildQuery = function (argument) {
+    	//build query
+
+    	//include
+
+
+    	//exclude
+
+
+
+    	//custom query
+    };
+
+    var processQuery = function(){
+
+    
+    };
+
+
+
+
 
 
 
@@ -293,6 +338,7 @@ Transamerica.Utils = (function(){
 		getAllkeys: getAllkeys,
 		searchCases : searchCases,
 		getIndexAttributeDistribution: getIndexAttributeDistribution,
-		buildProductIndexAttributes: buildProductIndexAttributes
+		buildProductIndexAttributes: buildProductIndexAttributes,
+		elasticSearchQueryObj: elasticSearchQueryObj //for testing 
 	}
 })();
