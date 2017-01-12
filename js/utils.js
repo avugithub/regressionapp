@@ -1,6 +1,10 @@
 Transamerica.Utils = (function(){
 	var recordAttributes = {};
-
+	var elasticSearchQueryObj = {
+		"included" : {},
+		"excluded" :{},
+		"custom_query": ""
+	};
 	var getAllkeys = function(obj)
 	{
 		//going over all keys until exhausted
@@ -252,16 +256,32 @@ Transamerica.Utils = (function(){
 
     var valueSelectHandler = function (row, attribute, value) {
     	row.find("a").click(function(){
-    		console.log($(this).attr("class"), attribute, value);
     		var tbody	= $("#attributeSelection");
-    		var queryType = "Included"
+    		var queryType = "included";
     		if($(this).attr("class") == "remove"){
-    			queryType = "Excluded"
+    				queryType = "excluded"
+	    	}
+    		if (elasticSearchQueryObj[queryType].hasOwnProperty(attribute))
+    		{
+    			return false;
     		}
-    		var row = $("<tr><td>"+attribute+"</td><td>"+value+"</td><td>"+queryType+"</td></tr>");
-    		tbody.append(row);
+    		else
+    		{	
+	    		elasticSearchQueryObj[queryType][attribute] = value;
+	    		var selectedAttributeRow = $("<tr><td>"+attribute+"</td><td>"+value+"</td><td>"+queryType.toUpperCase()+"<a class='removeSelectedAttribute'><span style='color:red' class='glyphicon glyphicon-remove'></span></a></td></tr>");
+    			selectedAttributeRow.find("a").click(function(){
+    				if($(this).attr("class") == "removeSelectedAttribute")
+    				{
+    					selectedAttributeRow.remove();
+    					delete elasticSearchQueryObj[queryType][attribute];
+    				}
+    			});
+    			tbody.append(selectedAttributeRow);
+    		}
     	});
     };
+
+
 
 
 	//export function 

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<!-- source: http://jsbin.com/iyeqer/1 -->
+<html>
+<head>
+<meta charset=utf-8 />
+<title>JS Bin</title>
+</head>
+<body>
+  <input type="button" id="theButton" value="Click Me">
+<script id="jsbin-javascript">
+(function() {
+  
+  document.getElementById("theButton").onclick = function() {
+  document.origin = "https://search-scenarios-llsguds6zuyl7hl4gfsomx4pxi.us-west-2.es.amazonaws.com";
+    var novoForm = window.open("https://search-scenarios-llsguds6zuyl7hl4gfsomx4pxi.us-west-2.es.amazonaws.com/_plugin/kibana/#/discover?_g=(refreshInterval:(display:Off,pause:!f,section:0,value:0),time:(from:now-30d,mode:quick,to:now))&_a=(columns:!(_source),index:ffiulii,interval:auto,query:(query_string:(analyze_wildcard:!t,query:'*')),sort:!(ComparisonLog.endTime,desc))", "wFormx", "width=800,height=600,location=no,menubar=no,status=no,titilebar=no,resizable=no,");
+    novoForm.onload = function() {
+      var w = novoForm.innerWidth;
+      var h = novoForm.innerHeight;
+      console.log(novoForm.document);
+    };
+  };
+})();
+</script>
+</body>
+</html>
