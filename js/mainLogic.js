@@ -365,6 +365,10 @@ Transamerica.ARIESRegression = (function() {
 				}
 			}	
    		});
+
+   		$("#discoverTestCase").click(function(){
+   			Transamerica.Utils.getIndexAttributeDistribution(selectedProduct);
+   		});
 	};
 	var updateProduct = function(value){
 		selectedProduct = value;

@@ -4,6 +4,19 @@ Transamerica.Utils = (function(){
 		"attributes": [],
 		"custom_query": ""
 	};
+	var sampleQuery = {
+		filtered:{
+			query : {},
+			filter:{
+				bool:{
+					must:[],
+					must_not:[],
+					should:[],
+				}
+			}	
+		}
+    };
+
 	var getAllkeys = function(obj)
 	{
 		//going over all keys until exhausted
@@ -301,33 +314,89 @@ Transamerica.Utils = (function(){
     	}
     }
 
-
-
-
-    var buildQuery = function (argument) {
-    	//build query
-
-    	//include
-
-
+    var buildQuery = function (queryString) {
+    	//must -> AND
+    	//must not -> EXCEPT
+    	//should -> OR
+    	var includedAttributes = elasticSearchQueryObj.attributes.filter(function(x){ return (x.queryType === "include"); });
+    	var attributes = includedAttributes.map(function(item){return item.name;});
+    	var classifiedAttributes = classifyDuplicates(attributes);
+    	var must_query = classifiedAttributes.unique.map(function(name){
+			return matchStatement(name,includedAttributes.find(function(x){return x.name == name}).value);
+    	});
+    	var should_query = [];
+    	var len = classifiedAttributes.duplicates.length;
+    	for (var i = 0; i < len ; i++) {
+    		var name = classifiedAttributes.duplicates[i];
+    		var objects = includedAttributes.filter(function(x){return x.name == name});
+    		for (var j = 0; j < objects.length ; j++)
+    		{
+				should_query.push(matchStatement(name, objects[i].value));   			
+    		}
+    	}
     	//exclude
+    	var exludedAttributes = elasticSearchQueryObj.attributes.filter(function(x){ return (x.queryType === "exclude"); });
+    	exludedAttributes = exludedAttributes.map(function(x){
+    		return matchStatement(x.name, x.value);
+    	});
 
+    	var newQuery = sampleQuery;
+    	newQuery.filtered.query = {
+    		query_string : {
+    			query: queryString
+    		}
+    	};
+    	newQuery.filtered.filter.bool.must = must_query;
+    	newQuery.filtered.filter.bool.must_not = exludedAttributes;
+    	newQuery.filtered.filter.bool.should = should_query;
 
-
-    	//custom query
+    	return { query: newQuery };
     };
 
-    var processQuery = function(){
 
-    
+    var classifyDuplicates  = function classifyDuplicates(arr){
+
+    	var response = { duplicates : [],
+    					 unique: []
+    					};
+
+    	for (var i = 0; i < arr.length; i++) 
+    	{
+    		if (arr.indexOf(arr[i], i + 1) > -1) 
+    		{
+    			if(response.duplicates.indexOf(arr[i]) === -1)
+    			{
+    				response.duplicates.push(arr[i]);
+    			}
+    		}else if(response.duplicates.indexOf(arr[i]) == -1)
+        	{
+        		response.unique.push(arr[i]);
+        	}
+    	}
+    	return response;
     };
 
+    var matchStatement = function matchStatement(attribute, value){
+		var query = 
+		{
+		  	"query" : {
+		    	"match" : {}
+			}  
+		};
+		query.query.match[attribute] = {
+			query: value,
+			type: "phrase"
+		}
+		return query
+    };
 
-
-
-
-
-
+    var processQuery = function(tableName, customQuery){
+    	var paramString = JSON.stringify(buildQuery(customQuery));
+    	var requestUrl = "https://m7kx722wp8.execute-api.us-west-2.amazonaws.com/prod/queryelasticsearch?tableName=" + tableName + 
+    	"&queryString="+ encodeURI(paramString); 
+    	AjaxCall(requestUrl,"","GET");
+    	
+    };
 
 	//export function 
 	return {
@@ -338,7 +407,6 @@ Transamerica.Utils = (function(){
 		getAllkeys: getAllkeys,
 		searchCases : searchCases,
 		getIndexAttributeDistribution: getIndexAttributeDistribution,
-		buildProductIndexAttributes: buildProductIndexAttributes,
-		elasticSearchQueryObj: elasticSearchQueryObj //for testing 
+		processQuery:processQuery
 	}
 })();
