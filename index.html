@@ -49,7 +49,8 @@
                 </div>
             </div>
             <div class="form-group" id="kibanaBox">
-                <label class="control-label col-sm-2" for="kibana_url">Copy and Paste Kibana Url Here</label>
+                <center><button type="button" id="discoverTestCase">Search</button></center>
+            <!--    <label class="control-label col-sm-2" for="kibana_url">Copy and Paste Kibana Url Here</label>
                 <div class="col-sm-6">
                     <input type="text" class="form-control" id="kibana_url" />
                 </div>
@@ -57,8 +58,10 @@
                     <button type="button" class="btn btn-primary" id="search">Search</button>
                     <button type="button" class="btn btn-danger" id="redirectKibana">Kibana</button>
                 </div>
+            -->
             </div>
-            <!--<div class="form-group">
+            <!--
+            <div class="form-group">
                 <label class="control-label col-sm-4" for="productSelect">Same Illustration System?(Ex: myTW vs myTW)</label>
                 <div class="col-sm-6">
                 <input type='radio' name = 'sameSystem'  value='yes' checked/> Yes
@@ -155,7 +158,7 @@
             </div>
         </div>
     </div>
-    <div id="searchBox" class= "row">
+    <div id="searchBox" class="row">
         <form>
             <div class="form-group">
                 <label for="queryBox">Custom Query</label>
@@ -166,19 +169,19 @@
             </div>
         </form>
         <div class="col-sm-4">
-            <table class="table table-hover" border="1">
+            <table class="table table-hover"  border="1">
                 <thead><tr class="success"><th>Attribute</th></tr></thead>
-                <tbody id="attributeTable"></tbody>
+                <tbody id="attributeTable" style="overflow: auto;height: 400px;"></tbody>
             </table>
         </div>
         <div class="col-sm-4">
-            <table class='table table-hover' border="1">
+            <table class='table table-hover' style="overflow: auto" border="1">
                 <thead><tr class="warning"><th>Value</th><th colspan="2">Number Of Records</th></tr></thead>
                 <tbody id="distribution"></tbody>
             </table>
         </div>
         <div class="col-sm-4">
-            <table class='table table-hover' border="1">
+            <table class='table table-hover'  style="overflow: auto" border="1">
                 <thead><tr class="warning"><th>Selected Attribute</th><th>Value</th><th>Include/Exclude</th></tr></thead>
                 <tbody id="attributeSelection"></tbody>
             </table>
