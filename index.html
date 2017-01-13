@@ -12,15 +12,11 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
     <style>
-        .modal-body {
-        position: relative;
-        overflow-y: auto;
-        max-height: 400px;
-        padding: 15px;
+        .modal-dialog {
+            width: 100%
         }
         table{
             cursor: pointer;
-
         }
     </style>
     
@@ -46,7 +42,7 @@
                 </div>
             </div>
             <div class="form-group" id="optionBox">
-                <center><button type="button" id="discoverTestCase">Search</button>&nbsp&nbsp<button type="button" id="getAllCases">Get All Casses</button></center>
+                <center><button id="discoverTestCase" type="button" data-toggle="modal" data-target="#searchPopup">Search</button>&nbsp&nbsp<button type="button" id="getAllCases">Get All Casses</button></center>
             <!--    <label class="control-label col-sm-2" for="kibana_url">Copy and Paste Kibana Url Here</label>
                 <div class="col-sm-6">
                     <input type="text" class="form-control" id="kibana_url" />
@@ -155,35 +151,70 @@
             </div>
         </div>
     </div>
-    <div id="searchBox" class="row">
-        <form>
-            <div class="form-group">
-                <label for="queryBox">Custom Query</label>
-                <input type="text"  class="form-control" id ="queryBox" />
-            </div>  
-            <div class="form-group">
-            <button type="button" class="btn btn-success active" id="queryElastic">SEARCH</button>
+
+
+    
+    <div class="modal fade" id="searchPopup" role="dialog">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-success active" id="queryElastic" data-dismiss="modal">SEARCH</button>
             </div>
-        </form>
-        <div class="col-sm-4">
-            <table class="table table-hover"  border="1">
-                <thead><tr class="success"><th>Attribute</th></tr></thead>
-                <tbody id="attributeTable" style="overflow: auto;height: 400px;"></tbody>
-            </table>
+            <div class="modal-body">
+                <div class="container">
+                    <div class="row">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <label  class=  "control-label col-sm-2" for="queryBox">Custom Query</label>
+                            <div  class="col-sm-8">
+                                <input type="text" class="form-control"  id ="queryBox" />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                        <center>
+                            <table border="1" class='table-condensed'  style="overflow: auto" >
+                                <thead><tr class="warning"><th>Selected Attribute</th><th>Value</th><th>Include/Exclude</th></tr></thead>
+                                <tbody id="attributeSelection"></tbody>
+                            </table>
+                            </center>
+                        </div>  
+                    </form>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-sm-5">
+                            <table border="1" class='table-condensed' >
+                                <thead>
+                                    <tr class="success">
+                                        <th>
+                                            Attribute
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="attributeTable" style="overflow: auto;height: 400px;"></tbody>
+                            </table>
+                        </div>
+                        <div class="col-sm-5">
+                            <table  border="1" class='table-condensed' style="overflow: auto" border="1">
+                                <thead><tr class="warning"><th>Value</th><th colspan="2">Number Of Records</th></tr></thead>
+                                <tbody id="distribution"></tbody>
+                            </table>
+                        </div>                        
+                    </div>
+                </div>
+            </div>
+          </div>
         </div>
-        <div class="col-sm-4">
-            <table class='table table-hover' style="overflow: auto" border="1">
-                <thead><tr class="warning"><th>Value</th><th colspan="2">Number Of Records</th></tr></thead>
-                <tbody id="distribution"></tbody>
-            </table>
-        </div>
-        <div class="col-sm-4">
-            <table class='table table-hover'  style="overflow: auto" border="1">
-                <thead><tr class="warning"><th>Selected Attribute</th><th>Value</th><th>Include/Exclude</th></tr></thead>
-                <tbody id="attributeSelection"></tbody>
-            </table>
         </div>
     </div>
+
+
+    
+
+
+
+    
 </body>
     <script src="js/notify.min.js"></script>
     <script src="js/globals.js"></script>
