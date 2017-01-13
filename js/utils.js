@@ -202,6 +202,7 @@ Transamerica.Utils = (function(){
 
     var buildProductIndexAttributes = function(data){
     	var table = $("#attributeTable");
+    	table.empty();
     	if(data.hasOwnProperty("errorMessage")){
     		//print out the error
     	}
@@ -308,12 +309,15 @@ Transamerica.Utils = (function(){
     	});
     	var should_query = [];
     	var len = classifiedAttributes.duplicates.length;
+
     	for (var i = 0; i < len ; i++) {
     		var name = classifiedAttributes.duplicates[i];
     		var objects = includedAttributes.filter(function(x){return x.name == name});
+
     		for (var j = 0; j < objects.length ; j++)
     		{
-				should_query.push(matchStatement(name, objects[i].value));   			
+    			console.log(objects[i]);
+				should_query.push(matchStatement(name, objects[j].value));   			
     		}
     	}
     	//exclude
@@ -432,7 +436,7 @@ Transamerica.Utils = (function(){
         if (url.charAt(0) === "/") url = url.substr(1);
 
         return server + "/" + url;
-}
+	}
 	//export function 
 	return {
 		changePriorityOne : changePriorityOne,

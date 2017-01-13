@@ -12,23 +12,22 @@ Transamerica.ARIESRegression = (function() {
 	var userCustomQuery = "";
 
 	var displayCases = function displayCases (data) {
-		console.log(data);
 		testCases  = data["hits"]["hits"];
-		buildScenarioTable();
+		buildScenarioTable(testCases,"testCases");
 	}
 
-	var buildScenarioTable = function (){
-		var tbody = $("#testCases");
+	var buildScenarioTable = function(dataArr , tbodyId){
+		var tbody = $("#" + tbodyId);
 		tbody.empty();
-		var num = testCases.length;
+		var num = dataArr.length;
 		var i;
 		for (i =0 ; i < num; i++ ){
-			var row = $("<tr id="+testCases[i]["_source"]["ScenarioGuid"]+"><td>"+(i+1)+
-				"</td><td class='ScenarioName'>"+testCases[i]["_source"]["ScenarioName"] +
+			var row = $("<tr id="+dataArr[i]["_source"]["ScenarioGuid"]+"><td>"+(i+1)+
+				"</td><td class='ScenarioName'>"+dataArr[i]["_source"]["ScenarioName"] +
 				"</tr>");
 			tbody.append(row);
 		}
-		$("#num_cases").html("( num: " + testCases.length + " cases)");
+		$("#num_cases").html("( num: " + dataArr.length + " cases)");
 	}
 
 
@@ -39,7 +38,7 @@ Transamerica.ARIESRegression = (function() {
 		for(i; i<len;i++){
 			testCase = testCases[i];
 			var scenarioID = testCase["_source"]["ScenarioGuid"];
-			var inputJSON  = testCase["_source"]["InputJSON"]
+			var inputJSON  = testCase["_source"]["InputJSON"];
 			processComparison(scenarioID, inputJSON);
 		}		
 	};
@@ -214,7 +213,7 @@ Transamerica.ARIESRegression = (function() {
 		var paramString = JSON.stringify(caseJSON);
 		var re = new RegExp("\" \"" , 'g');
 		paramString = paramString.replace(re, "\"\"");
-		var url = endpoint + "?key=f19d590dcc2b" + "&configuration=&jsWebIllustration=" + paramString;
+		var url = "http://" + endpoint + "?key=f19d590dcc2b" + "&configuration=&jsWebIllustration=" + paramString;
 		return url;
 	};
 
@@ -244,7 +243,7 @@ Transamerica.ARIESRegression = (function() {
 			var testCasestbody = $("#testCases");
 			testCasestbody.empty();
 			tbody.empty();
-			buildScenarioTable();
+			buildScenarioTable(testCases, "testCases");
 		});	
 	}
 
@@ -265,7 +264,7 @@ Transamerica.ARIESRegression = (function() {
 			}
 			var testCasestbody = $("#testCases");
 			testCasestbody.empty();
-			buildScenarioTable();
+			buildScenarioTable(testCases, "testCases");
 			var thead = $("#tableTitle");
 			thead.empty();
 			var header = "<tr class='info'><th>No</th><th>Name</th><th>Endpoint 1</th><th>Endpoint 2</th>";
@@ -310,14 +309,13 @@ Transamerica.ARIESRegression = (function() {
 	        }
    		});
 
-
-
    		$("#getAllCases").click(function(){
    			Transamerica.Utils.processQuery(selectedProduct.toLowerCase(), "*" , displayCases);
    		});
    		$("#queryElastic").click(function(){
    			userCustomQuery = $("#queryBox").val();
    			Transamerica.Utils.processQuery(selectedProduct.toLowerCase(), userCustomQuery || "*", displayCases );
+   			$("#testCases").notify("Getting Cases ... ", "success");
    		});
 
    		$("#discoverTestCase").click(function(){
@@ -350,7 +348,8 @@ Transamerica.ARIESRegression = (function() {
 	return {
 		loadProducts : loadProducts,
 		initialize: initialize,
-		outputs:outputs // for testing - remove 
+		outputs:outputs ,// for testing - remove 
+		testCases:testCases
 	};
 })();
 
