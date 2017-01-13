@@ -201,8 +201,8 @@ Transamerica.Utils = (function(){
     };
 
     var buildProductIndexAttributes = function(data){
-    	var table = $("#attributeTable");
-    	table.empty();
+    	var tbody = $("#attributeTable");
+    	tbody.empty();
     	if(data.hasOwnProperty("errorMessage")){
     		//print out the error
     	}
@@ -214,17 +214,34 @@ Transamerica.Utils = (function(){
     				var buckets = aggregations[attribute]["buckets"];
     				var len = buckets.length;
     				var i;
-    				var row = $("<tr id='"+attribute+"'><td>"+attribute+"</td></tr>");
+    				var row = $("<tr id='"+attribute+"'><td>"+attribute+"</td><td>"+categorizeAttribute(attribute)+"</td></tr>");
     				recordAttributes[attribute] = {  }
     				for (i = 0; i< len; i++){
     					recordAttributes[attribute][buckets[i]["key"]] = buckets[i]["doc_count"];
     				}
     				rowClickHandler(attribute, row);
-    				table.append(row);
+    				tbody.append(row);
     			}
     		}
+    	}    	
+    }
+
+    var categorizeAttribute = function categorizeAttribute(attribute) {
+    	var availableCategories = Transamerica.Globals.myTWInputCategories;
+    	if(attribute.includes("InputJSON")){
+    		var myTWkey = attribute.replace("InputJSON.","");
+    		if(availableCategories.hasOwnProperty(myTWkey)){
+    			return availableCategories[myTWkey];
+    		}else
+    		{
+    			return "Other Inputs";	
+    		}
+
+    	}else{
+    		return "";
     	}
     }
+
     var rowClickHandler= function(attribute, row){
     	row.click(function(){
 		    //highlight the row clicked
@@ -446,6 +463,7 @@ Transamerica.Utils = (function(){
 		getAllkeys: getAllkeys,
 		getIndexAttributeDistribution: getIndexAttributeDistribution,
 		processQuery:processQuery,
-        callES : callES
+        callES : callES,
+        recordAttributes:recordAttributes
 	}
 })();

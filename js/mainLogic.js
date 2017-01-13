@@ -39,6 +39,11 @@ Transamerica.ARIESRegression = (function() {
 			testCase = testCases[i];
 			var scenarioID = testCase["_source"]["ScenarioGuid"];
 			var inputJSON  = testCase["_source"]["InputJSON"];
+			if(inputJSON == ""){
+				$("#" + scenarioID).css("background-color", "red");
+				continue;
+			}
+			$("#" + scenarioID).css("background-color", "#dfe2e8");
 			processComparison(scenarioID, inputJSON);
 		}		
 	};
@@ -213,7 +218,7 @@ Transamerica.ARIESRegression = (function() {
 		var paramString = JSON.stringify(caseJSON);
 		var re = new RegExp("\" \"" , 'g');
 		paramString = paramString.replace(re, "\"\"");
-		var url = "http://" + endpoint + "?key=f19d590dcc2b" + "&configuration=&jsWebIllustration=" + paramString;
+		var url = endpoint.includes("http://") ?  "" :"http://" + endpoint + "?key=f19d590dcc2b" + "&configuration=&jsWebIllustration=" + paramString;
 		return url;
 	};
 
@@ -254,7 +259,6 @@ Transamerica.ARIESRegression = (function() {
 		fillSelectBox();
 		$("#nodeSelectBox").hide();
 		$("#optionBox").hide();
-
 		$("#compare").click(function(){
 			var selectedNodesArray = selectedNodes;
 			//validation
@@ -313,12 +317,13 @@ Transamerica.ARIESRegression = (function() {
    			Transamerica.Utils.processQuery(selectedProduct.toLowerCase(), "*" , displayCases);
    		});
    		$("#queryElastic").click(function(){
+   			$("#testCases").empty();
    			userCustomQuery = $("#queryBox").val();
    			Transamerica.Utils.processQuery(selectedProduct.toLowerCase(), userCustomQuery || "*", displayCases );
-   			$("#testCases").notify("Getting Cases ... ", "success");
    		});
 
    		$("#discoverTestCase").click(function(){
+   			$("#attributeBox").tablesorter();
    			Transamerica.Utils.getIndexAttributeDistribution(selectedProduct);
    		});
 
