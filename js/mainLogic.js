@@ -9,21 +9,13 @@ Transamerica.ARIESRegression = (function() {
 	var testCases = [];
 	var isSameSystem = true;
 	var myTWJSONkeys = Transamerica.Globals.myTWJSONkeys;
+	var userCustomQuery = "";
 
-	//save endpoint 1 and 2 
-	// var endpoint1 = "";
-	// var endpoint2 = "";
-
-	var displayCases = function(data){
-		var response = data["response"];
-		if(Array.isArray(response) == false){
-			$.notify("No Test Case Received For the Given Query Url");
-		}else{
-			testCases = [];
-			testCases = response;
-			buildScenarioTable();
-		}
-	};
+	var displayCases = function displayCases (data) {
+		console.log(data);
+		testCases  = data["hits"]["hits"];
+		buildScenarioTable();
+	}
 
 	var buildScenarioTable = function (){
 		var tbody = $("#testCases");
@@ -257,49 +249,12 @@ Transamerica.ARIESRegression = (function() {
 	}
 
 
-	var validateKibanaUrl = function(){
-			var kibana_url = $("#kibana_url");
-   			var value = kibana_url.val();
-   			var valid = true;
-   			const regex = /(index:[^,]+)/g;
-   			var name;
-   			var matchArray = regex.exec(value);
-
-   			if(value == ""){
-   				$.notify(`Please provide a kibana url for ${selectedProduct} ! `);
-   				return false;
-   			}
-
-   			if(matchArray !== null){
-   				for(var i = 0; i < matchArray.length;i++){
-   					var k = matchArray[i].split(":");
-   					if(k.length == 2) {   						
-   						name = k[1];
-   						break;
-   					}else{
-   						continue;
-   					}
-   				}
-   				if(name  !== selectedProduct.toLowerCase()){
-   					$.notify(`This  kibana url is not for ${selectedProduct} ! `);
-   					$(this).val("");
-   					valid = false;
-   				}else{
-   					valid = true;
-   				}
-   			}else{
-   				$.notify(`This kibana url is not for ${selectedProduct} !`);
-   				$(this).val("");
-   				valid = false;
-   			}
-			return valid;
-   		};
 
 	//public
 	var initialize = function (){
 		fillSelectBox();
 		$("#nodeSelectBox").hide();
-		$("#kibanaBox").hide();
+		$("#optionBox").hide();
 
 		$("#compare").click(function(){
 			var selectedNodesArray = selectedNodes;
@@ -331,7 +286,7 @@ Transamerica.ARIESRegression = (function() {
 				return false;
 			}
 			if(testCases.length == 0){
-				$.notify("There is no test case for testing. Please provide the kibana url and press Search")
+				$.notify("There is no test case for testing.")
 				return false;
 			}
 			else if(isSameSystem === false)
@@ -355,27 +310,27 @@ Transamerica.ARIESRegression = (function() {
 	        }
    		});
 
-   		$("#search").click(function(){
-   			if(validateKibanaUrl()){
-   				$.notify(`Getting test cases for ${selectedProduct} ! `, "success");
-   				if(selectedProduct === ""){
-					$.notify("Please select a product");
-				}else{
-					Transamerica.Utils.searchCases(selectedProduct, $("#kibana_url").val());
-				}
-			}	
+
+
+   		$("#getAllCases").click(function(){
+   			Transamerica.Utils.processQuery(selectedProduct.toLowerCase(), "*" , displayCases);
+   		});
+   		$("#queryElastic").click(function(){
+   			userCustomQuery = $("#queryBox").val();
+   			Transamerica.Utils.processQuery(selectedProduct.toLowerCase(), userCustomQuery || "*", displayCases );
    		});
 
    		$("#discoverTestCase").click(function(){
    			Transamerica.Utils.getIndexAttributeDistribution(selectedProduct);
    		});
+
 	};
-	var updateProduct = function(value){
+	var updateProduct = function updateProduct(value){
 		selectedProduct = value;
 		$("#productTitle").text(value);
 	}
 
-	var loadProducts = function(selectBoxId){
+	var loadProducts = function loadProducts(selectBoxId){
 		selectBox = $("#productSelect");
 		var  i = 0;
 		for(i; i < products.length; i++){
@@ -389,19 +344,7 @@ Transamerica.ARIESRegression = (function() {
 				return;
 			}
 			updateProduct(value);
-			$("#kibana_url").val("");
-			$("#kibanaBox").show();
-		});
-
-		$("#redirectKibana").click(function(){
-			if(selectedProduct === ""){
-				$.notify("Please Select A Product");
-				return false;
-			}
-			var index = selectedProduct.toLowerCase();
-			var kibanaUrl = `https://search-scenarios-llsguds6zuyl7hl4gfsomx4pxi.us-west-2.es.amazonaws.com/_plugin/kibana/#/discover?_g=(refreshInterval:(display:Off,pause:!f,section:0,value:0),time:(from:now-30d,mode:quick,to:now))&_a=(columns:!(_source),\
-index:${index},interval:auto,query:(query_string:(analyze_wildcard:!t,query:'*')),sort:!(ComparisonLog.endTime,desc))`;
-			window.open(kibanaUrl);
+			$("#optionBox").show();
 		});
 	};
 	return {

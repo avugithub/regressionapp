@@ -193,22 +193,7 @@ Transamerica.Utils = (function(){
         }
     };
 
-    var searchCases = function(selectedProduct, url){
-		var value = url;
-		var splitTerms = value.split("),");
-		var queryStatement  = [];
-		var len = splitTerms.length;
-		for(var i = 0 ; i < len ; i++){
-			if(splitTerms[i].includes("query:(match:(")){
-		  queryStatement.push(splitTerms[i]);
-
-		  }
-		} 
-		var tableName = selectedProduct.toLowerCase();
-		var baseURl = "https://m7kx722wp8.execute-api.us-west-2.amazonaws.com/prod/gettestcasesfromkibanaurl";
-		var requestUrl = baseURl + "?tableName=" + tableName + "&url="+queryStatement.join();
-		AjaxCall(requestUrl, "", "GET",displayCases );
-	};
+    
 
     var  getIndexAttributeDistribution = function(tableName, domContainer){
     	var requestUrl = "https://m7kx722wp8.execute-api.us-west-2.amazonaws.com/prod/getindexdistribution?tableName=" + tableName; 
@@ -238,9 +223,6 @@ Transamerica.Utils = (function(){
     			}
     		}
     	}
-
-
-    	
     }
     var rowClickHandler= function(attribute, row){
     	row.click(function(){
@@ -343,14 +325,24 @@ Transamerica.Utils = (function(){
     	var newQuery = sampleQuery;
     	newQuery.filtered.query = {
     		query_string : {
-    			query: queryString
+    			query: queryString || "*"
     		}
     	};
     	newQuery.filtered.filter.bool.must = must_query;
     	newQuery.filtered.filter.bool.must_not = exludedAttributes;
     	newQuery.filtered.filter.bool.should = should_query;
 
-    	return { query: newQuery };
+        var fields = classifiedAttributes.unique.concat(classifiedAttributes.duplicates);
+        fields = fields.concat(["ScenarioGuid", "ScenarioName", "InputJSON" ]);     
+
+        console.log(fields)
+    	return {
+            _source : fields,
+            size: 9999,
+            query : newQuery 
+
+
+        };
     };
 
 
@@ -390,14 +382,57 @@ Transamerica.Utils = (function(){
 		return query
     };
 
-    var processQuery = function(tableName, customQuery){
-    	var paramString = JSON.stringify(buildQuery(customQuery));
-    	var requestUrl = "https://m7kx722wp8.execute-api.us-west-2.amazonaws.com/prod/queryelasticsearch?tableName=" + tableName + 
-    	"&queryString="+ encodeURI(paramString); 
-    	AjaxCall(requestUrl,"","GET");
+    var processQuery = function(tableName, customQuery, callBack){
+  
+        //the following code calls lambda function - for security purposes 
+        //var paramString = JSON.stringify(buildQuery(customQuery));
+    	//var requestUrl = "https://m7kx722wp8.execute-api.us-west-2.amazonaws.com/prod/queryelasticsearch?tableName=" + tableName + 
+    	//"&queryString="+ encodeURI(paramString); 
+    	//AjaxCall(requestUrl,"","GET");
+
+        //use the follow code to call es directly - as long as the endpoint is open to public
+        var server = "search-scenarios-llsguds6zuyl7hl4gfsomx4pxi.us-west-2.es.amazonaws.com";
+        var query =  buildQuery(customQuery);
+        
+                console.log(JSON.stringify(query));
+    
+        callES(server, tableName + "/_search", "GET",  JSON.stringify(query), callBack);
     	
     };
 
+    var callES = function callES(server, url, method, data, successCallback, completeCallback) {
+        url = constructESUrl(server, url);
+        var uname_password_re = /^(https?:\/\/)?(?:(?:(.*):)?(.*?)@)?(.*)$/;
+        var url_parts = url.match(uname_password_re);
+
+        var uname = url_parts[2];
+        var password = url_parts[3];
+        url = url_parts[1] + url_parts[4];
+        if (data && method == "GET") method = "POST";
+
+        $.ajax({
+            url: url,
+            data: method == "GET" ? null : data,
+            password: password,
+            username: uname,
+            crossDomain: true,
+            type: method,
+            dataType: "json",
+            complete: completeCallback,
+            success: successCallback
+    });
+    }
+
+    var constructESUrl =  function constructESUrl(server, url) {
+        if (url.indexOf("://") >= 0) return url;
+        if (server.indexOf("://") < 0) server = "http://" + server;
+        if (server.substr(-1) == "/") {
+            server = server.substr(0, server.length - 1);
+        }
+        if (url.charAt(0) === "/") url = url.substr(1);
+
+        return server + "/" + url;
+}
 	//export function 
 	return {
 		changePriorityOne : changePriorityOne,
@@ -405,8 +440,8 @@ Transamerica.Utils = (function(){
 		AjaxCall: AjaxCall,
 		comparisionTable:comparisionTable,
 		getAllkeys: getAllkeys,
-		searchCases : searchCases,
 		getIndexAttributeDistribution: getIndexAttributeDistribution,
-		processQuery:processQuery
+		processQuery:processQuery,
+        callES : callES
 	}
 })();
