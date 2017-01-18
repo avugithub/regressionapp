@@ -1,361 +1,382 @@
 
 
-Transamerica.ARIESRegression = (function() {
-	//private 
-	var selectedProduct = "";
-	const products = ["FEBII", "ACCUMIULr" ,"FFIULII", "IUL09", "LB201701", "Super201701"];
-	var selectedNodes = [];
-	var outputs = {};	
-	var testCases = [];
-	var isSameSystem = true;
-	var myTWJSONkeys = Transamerica.Globals.myTWJSONkeys;
-	var userCustomQuery = "";
+Transamerica.ARIESRegression = (function () {
+    //const
+    const products = ["FEBII", "ACCUMIULr", "FFIULII", "IUL09", "LB201701", "Super201701"];
+    const myTWJSONkeys = Transamerica.Globals.myTWJSONkeys;
+    //variables
+    var selectedProduct = "";
+    var selectedNodes = [];
+    var outputs = {};
+    var testCases = [];
+    var userCustomQuery = "";
+    var endpoint1 = "";
+    var endpoint2 = "";
 
-	var displayCases = function displayCases (data) {
-		testCases  = data["hits"]["hits"];
-		buildScenarioTable(testCases,"testCases");
-	}
+    var displayCases = function displayCases(data) {
+        testCases = data["hits"]["hits"];
+        console.log(testCases);
+        buildScenarioTable(testCases, "testCases");
+    }
 
-	var buildScenarioTable = function(dataArr , tbodyId){
-		var tbody = $("#" + tbodyId);
-		tbody.empty();
-		var num = dataArr.length;
-		var i;
-		for (i =0 ; i < num; i++ ){
-			var row = $("<tr id="+dataArr[i]["_source"]["ScenarioGuid"]+"><td>"+(i+1)+
-				"</td><td class='ScenarioName'>"+dataArr[i]["_source"]["ScenarioName"] +
-				"</tr>");
-			tbody.append(row);
-		}
-		$("#num_cases").html("( num: " + dataArr.length + " cases)");
-	}
+    var buildScenarioTable = function (dataArr, tbodyId) {
+        var tbody = $("#" + tbodyId);
+        tbody.empty();
+        var num = dataArr.length;
+        var i;
+        var queryAttributes = Transamerica.Utils.elasticSearchQueryObj.attributes;
+        var attributeNames = Transamerica.Utils.getUniqueVals(queryAttributes.map(function (x) { return x.name }));
 
+        var trthead = $("#tableTitle").find("tr");
+        $(".attrName").remove();
+        //for (var j = 0; j < attributeNames.length; j++)
+        //{
+        //    trthead.append($("<th class='attrName'>" + attributeNames[j] + "</th>"));
+        //}
 
+        for (i = 0 ; i < num; i++)
+        {
+            var record = dataArr[i]["_source"];
+            var row = $("<tr id=" + dataArr[i]["_source"]["ScenarioGuid"] + "><td>" + (i + 1) + "</td><td class='ScenarioName'>" + dataArr[i]["_source"]["ScenarioName"] + "</td></tr>");
+            //for (var j = 0; j < attributeNames.length; j++)
+            //{
+                
+            //    row.append($("<td>" +getValueForNode(dataArr[i]["_source"],attributeNames[j]) + "</td>"));
+                
+            //}
+            tbody.append(row);
+        }
+        $("#num_cases").html("( num: " + dataArr.length + " cases)");
+    }
 
-	var compareTwoEndPoints = function(){
-		var i = 0;
-		var len = testCases.length;
-		for(i; i<len;i++){
-			testCase = testCases[i];
-			var scenarioID = testCase["_source"]["ScenarioGuid"];
-			var inputJSON  = testCase["_source"]["InputJSON"];
-			if(inputJSON == ""){
-				$("#" + scenarioID).css("background-color", "red");
-				continue;
-			}
-			$("#" + scenarioID).css("background-color", "#dfe2e8");
-			processComparison(scenarioID, inputJSON);
-		}		
-	};
-	
-	var errorHandlingCallBack = function(data){
-		$.notify(`The webservice did not send any response back ! Status: ${data.status}`);
-		console.log(data);
-	}
+    var compareTwoEndPoints = function () {
+        var i = 0;
+        var len = testCases.length;
+        for (i; i < len; i++) {
+            testCase = testCases[i];
+            var scenarioID = testCase["_source"]["ScenarioGuid"];
+            var inputJSON = testCase["_source"]["InputJSON"];
+            if (!testCase["_source"]["InputJSON"]) {
+                $("#" + scenarioID).css("background-color", "red");
+                $("#" + scenarioID).notify("No Input JSON found", { position: "left-center" });
+                continue;
+            }
+            processComparison(scenarioID, inputJSON);
+        }
+    };
 
-	//COMPARING
-	var processComparison = function(scenarioID, inputJSON){
-		//the reason I moved the code is closure in JS is only created inside function
-		//refer to http://www.w3schools.com/js/js_function_closures.asp
-		var url1  = getMyTranswareServiceURL($("#endpoint1").val(),inputJSON);
-		var url2  = getMyTranswareServiceURL($("#endpoint2").val(),inputJSON);
+    var errorHandlingCallBack = function (data) {
+        $.notify(`The webservice did not send any response back ! Status: ${data.status}`);
+        console.log(data);
+    }
 
-		var row = $("#"+scenarioID);
+    //COMPARING
+    var processComparison = function (scenarioID, inputJSON) {
+        //the reason I moved the code is closure in JS is only created inside function
+        //refer to http://www.w3schools.com/js/js_function_closures.asp
+        var url1 = getMyTranswareServiceURL(endpoint1, inputJSON);
+        var url2 = getMyTranswareServiceURL(endpoint2, inputJSON);
 
-		outputs[scenarioID] = {};
+        var row = $("#" + scenarioID);
 
-		//send 2 ajax requests in order
-		Transamerica.Utils.AjaxCallCORS(url1,"","GET", function(data){
+        outputs[scenarioID] = {};
 
-			outputs[scenarioID]["version1"] = {};
-			var version1 = JSON.parse(data);
-			row.append($("<td><span class='glyphicon glyphicon-stop' style='color:green'></span></td>"));
+        //send 2 ajax requests in order
+        Transamerica.Utils.AjaxCallCORS(url1, "", "GET", function (data){
 
-			Transamerica.Utils.AjaxCallCORS(url2,"","GET", function(data){
+            outputs[scenarioID]["version1"] = {};
+            var version1 = JSON.parse(data);
+            row.append($("<td><span class='glyphicon glyphicon-stop' style='color:green'></span></td>"));
 
-				row.append($("<td><span class='glyphicon glyphicon-stop' style='color:green'></span></td>"));
-				outputs[scenarioID]["version2"] = {};
-				var version2 = JSON.parse(data);
-				
-				//object for storing comparison data
-				outputs[scenarioID]["version1"]["selectedKeyOutputs"] = {};
-				outputs[scenarioID]["version2"]["selectedKeyOutputs"] = {};
+            Transamerica.Utils.AjaxCallCORS(url2, "", "GET", function (data){
+                row.append($("<td><span class='glyphicon glyphicon-stop' style='color:green'></span></td>"));
+                outputs[scenarioID]["version2"] = {};
+                var version2 = JSON.parse(data);
 
-				var len = selectedNodes.length;
-				var outputString = "";
-				var tds = "";				
+                //object for storing comparison data
+                outputs[scenarioID]["version1"]["selectedKeyOutputs"] = {};
+                outputs[scenarioID]["version2"]["selectedKeyOutputs"] = {};
 
-				if(version1 != null & version2 != null){
-					if(version1.ErrorCode !== 9 & version2.ErrorCode !== 9 ){
-					   //start compare
-						var finalResult = true;
+                var len = selectedNodes.length;
+                var outputString = "";
+                
 
-						for(var j =0; j< len; j++){
-						   var currentNode = selectedNodes[j];
-						   var version1Values = getValueForNode(version1,currentNode);
-						   var version2Values = getValueForNode(version2,currentNode);
+                if (version1 != null & version2 != null) {
+                    if (version1.ErrorCode !== 9 & version2.ErrorCode !== 9) {
+                        //start compare
+                        var finalResult = true;
 
-						   //cache the  values for current node so we can display later
-						   outputs[scenarioID]["version1"]["selectedKeyOutputs"][currentNode] = version1Values;
-						   outputs[scenarioID]["version2"]["selectedKeyOutputs"][currentNode] = version2Values;
+                        for (var j = 0; j < len; j++) {
+                            var currentNode = selectedNodes[j];
+                            var version1Values = getValueForNode(version1, currentNode);
+                            var version2Values = getValueForNode(version2, currentNode);
 
-						   console.log(`Comparing : (${currentNode})`, version1Values, version2Values)
-						   var result = compareTwoNodes(version1Values,version2Values)
-						   if(result === false){ 
-						   		finalResult = false;
-						   }
-						   outputString =`<span class='glyphicon glyphicon-stop' style="color:`+colorCode(result)+`"></span>`;
-						   tds += `<td>${outputString}</td>`;
-						}
+                            //cache the  values for current node so we can display later
+                            outputs[scenarioID]["version1"]["selectedKeyOutputs"][currentNode] = version1Values;
+                            outputs[scenarioID]["version2"]["selectedKeyOutputs"][currentNode] = version2Values;
 
-						tds += `<td style="color:`+colorCode(finalResult)+`">${finalResult === true ? "PASS" : "FAIL" }&nbsp<a id='details_${scenarioID}' style='cursor:pointer'>Details</a></td>`
-						row.append($(tds));
-						rowClickEventHandler(scenarioID);
-					}
-				   	else if(version1.ErrorCode === 9 || version2.ErrorCode === 9 ){
-						for(var j =0; j< len; j++){
-						   var currentNode = selectedNodes[j];						   
-						   outputString =`<span class='glyphicon glyphicon-stop' style="color:red"></span>`;
-						   tds += `<td>${outputString}</td>`;
-						}
-						var message = version1.ErrorCode === 9 ? "ENDPOINT A returns an Error Message : " + version1.Messages :  "ENDPOINT B returns an Error Message : " + version2.Messages;
-						if(version1.ErrorCode === 9 && version2.ErrorCode === 9 ){
-							message = "BOTH ENDPOINTS RETURN ERROR. ENDPOINT A: " + version1.Messages + "| ENDPOINT B :" + version2.Messages;
-						}
-						tds += `<td style="color:red">FAIL</td><td>${message}</td>`
-						row.append($(tds));
-				    }
-				}else{
-				   $.notify("No Data Received From Endpoint" +  version1 != null ? $("#endpoint1").val() : $("#endpoint2").val());
-				}
-			},function(data){ 
-							$.notify(" ENDPOINT 2 - ERROR : Got error from the webervice. Status: "+ data.status);
-							row.append($("<td><span class='glyphicon glyphicon-stop' style='color:red'></span></td>"));
-				});
-		},function(data){ 
-							$.notify("ENDPOINT 1 - ERROR : Got error from the webervice. Status: "+ data.status);
-							row.append($("<td><span class='glyphicon glyphicon-stop' style='color:red'></span></td>"));
-				});
+                            console.log(`Comparing : (${currentNode})`, version1Values, version2Values)
+                            var result = compareTwoNodes(version1Values, version2Values)
+                            if (result === false) {
+                                finalResult = false;
+                            }
+                            outputString = `<span class='glyphicon glyphicon-stop' style="color:` + colorCode(result) + `"></span>`;
+                            var domID = `details_${scenarioID}_${j}`;
+                            row.append($(`<td id='${domID}' style="background:#FAFFD1">${outputString}</td>`));
+                            rowClickEventHandler(domID, scenarioID, currentNode);
+                        }
+                        row.append($(`<td style="color:` + colorCode(finalResult) + `">${finalResult === true ? "PASS" : "FAIL"}</td>`));
+                    }
+                    else if (version1.ErrorCode === 9 || version2.ErrorCode === 9) {
+                        for (var j = 0; j < len; j++) {
+                            var currentNode = selectedNodes[j];
+                            outputString = `<span class='glyphicon glyphicon-stop' style="color:red"></span>`;
+                            row.append($(`<td>${outputString}</td>`));
+                        }
+                        var message = version1.ErrorCode === 9 ? "ENDPOINT A returns an Error Message : " + version1.Messages : "ENDPOINT B returns an Error Message : " + version2.Messages;
+                        if (version1.ErrorCode === 9 && version2.ErrorCode === 9) {
+                            message = "BOTH ENDPOINTS RETURN ERROR. ENDPOINT A: " + version1.Messages + "| ENDPOINT B :" + version2.Messages;
+                        }
+                        row.append($(`<td style="color:red">FAIL</td><td>${message}</td>`));
+                    }
+                } else {
+                    $.notify("No Data Received From Endpoint" + version1 != null ? endpoint1 : endpoint2);
+                }
+            }, function (data) {
+                $.notify(" ENDPOINT 2 - ERROR : Got error from the webervice. Status: " + data.status);
+                row.append($("<td><span class='glyphicon glyphicon-stop' style='color:red'></span></td>"));
+            });
+        }, function (data) {
+            $.notify("ENDPOINT 1 - ERROR : Got error from the webervice. Status: " + data.status);
+            row.append($("<td><span class='glyphicon glyphicon-stop' style='color:red'></span></td>"));
+        });
 
-		//update global object
-		Transamerica.ARIESRegression.outputs = outputs;
-	};
+        Transamerica.ARIESRegression.outputs = outputs;
+    };
 
-	var colorCode = function(bool){
-		if(bool === true){
-			return "green";
-		}else{
-			return "red";
-		}
-	}
+    var colorCode = function (bool) {
+        if (bool === true) {
+            return "green";
+        } else {
+            return "red";
+        }
+    }
 
-	var rowClickEventHandler = function (scenarioId) {
-        $(`#details_${scenarioId}`).click(function () {
+    var rowClickEventHandler = function (domID,scenarioId, currentNode) {
+        $("#" + domID).click(function () {
+            
+            var caseName = document.getElementById(scenarioId).getElementsByClassName("ScenarioName")[0].innerHTML;
+            var endpoint1Data = outputs[scenarioId]["version1"]["selectedKeyOutputs"][currentNode];
+            var endpoint2Data = outputs[scenarioId]["version2"]["selectedKeyOutputs"][currentNode];
+            $("#testCaseName").html("- Test Case: " + caseName + " Comparison Data For: " + currentNode);
+            $("#comparisonTable").empty();
+            $("#comparisonTable").append($(Transamerica.Utils.getCompRowsMarkup(endpoint1Data, endpoint2Data)));
+            $(".viewData").click(function () {
+                $(this).parent().parent().parent().parent().find(".dataBox").toggle();
+            });
             $("#detailsModal").modal("show");
-            Transamerica.Utils.comparisionTable(scenarioId);
         });
     };
 
-	var getValueForNode = function(grandObj, nodeString){
-		var nodes  = nodeString.split(".");
-		var obj = grandObj;
-		for (var i = 0, len = nodes.length; i < len; i++) {
-			obj = obj[nodes[i]]; 
-		}
-		return obj;
-	}
-	
-	var compareTwoNodes = function(obj1 , obj2)
-	{
-		var result = true; 
-		if(obj1 instanceof Array == true){
-			if(obj1.len == obj2.len){
-				result = compareTwoArrays(obj1,obj2)
-			}else{
-				result = false;
-			}
-		}
-		else
-		{
-			if (obj1 == obj2){
-				result =true;
-			}else{
-				result = false;
-			}
-		}
-		return result;
-	}
-	
-	var compareTwoArrays = function (arr1, arr2){
-		result = true;
-		var len = arr1.length;
-		var i = 0;
-		for(i; i< len; i++){
-			if(typeof(arr1[i]) == "object" && typeof(arr2[i]) == "object"){
-				result = JSON.stringify(arr1[i]) === JSON.stringify(arr2[i]); // we can go deeper !
-			}else{
-				if(arr1[i] != arr2[i])
-				{	
-					return false;
-				}
-			}
-		}
-		return result;
-	};
-	
-	var displaySelectedNode = function(tbodyId, currentSelectedNodes){
-		var tbody = $("#" + tbodyId);
-		tbody.empty();
-		var i = 0;
-		var len  = currentSelectedNodes.length;
-		for (i; i<len; i++){
-			tbody.append($("<tr><td>"+(i+1)+"</td><td>"+currentSelectedNodes[i]+"</td></tr>"));
-		}
-	};
-	
-	var getMyTranswareServiceURL = function(endpoint,caseJSON){
-		var calServiceUrl = endpoint;
-		var paramString = JSON.stringify(caseJSON);
-		var re = new RegExp("\" \"" , 'g');
-		paramString = paramString.replace(re, "\"\"");
-		var url = endpoint.includes("http://") ?  "" :"http://" + endpoint + "?key=f19d590dcc2b" + "&configuration=&jsWebIllustration=" + paramString;
-		return url;
-	};
+    
 
-	var fillSelectBox = function(){
-		var selectBox = $("#endpointSelect");
-		var myTWNodes = myTWJSONkeys;
-		var len = myTWNodes.length;
-		var  i = 0;
-		for(i; i < len; i++){
-			var option = $("<option val="+myTWNodes[i]+">"+myTWNodes[i]+"</option>");
-			selectBox.append(option);
-		}
-		selectBox.select2();
-		selectBox.change(function(){
-				//add selected nodes to an array
-				var value = selectBox.val();
-				if(value != ""){
-					selectedNodes.push(value);
-					displaySelectedNode("selected_nodes_tbody", selectedNodes);
-				}else{
-					return;
-				}
-		});
-		$("#clear_endpoint").click(function(){
-			selectedNodes = [];
-			var tbody = $("#selected_nodes_tbody");
-			var testCasestbody = $("#testCases");
-			testCasestbody.empty();
-			tbody.empty();
-			buildScenarioTable(testCases, "testCases");
-		});	
-	}
+    var getValueForNode = function (grandObj, nodeString) {
+        var nodes = nodeString.split(".");
+        var obj = grandObj;
+        for (var i = 0, len = nodes.length; i < len; i++) {
+            obj = obj[nodes[i]];
+        }
+        return obj;
+    }
+
+    var compareTwoNodes = function (obj1, obj2) {
+        var result = true;
+        if (obj1 instanceof Array == true && obj2 instanceof Array == true) {
+            if (obj1.len == obj2.len) {
+                result = compareTwoArrays(obj1, obj2)
+            } else {
+                result = false;
+            }
+        }
+        else {
+            if (obj1 == obj2) {
+                result = true;
+            } else {
+                result = false;
+            }
+        }
+        return result;
+    }
+
+    var compareTwoArrays = function (arr1, arr2) {
+        result = true;
+        var len = arr1.length;
+        var i = 0;
+        for (i; i < len; i++) {
+            if (typeof (arr1[i]) == "object" && typeof (arr2[i]) == "object") {
+                result = JSON.stringify(arr1[i]) === JSON.stringify(arr2[i]); // we can go deeper 
+            } else {
+                if (arr1[i] != arr2[i]) {
+                    return false;
+                }
+            }
+        }
+        return result;
+    };
+
+    var displaySelectedNode = function (tbodyId, currentSelectedNodes) {
+        var tbody = $("#" + tbodyId);
+        tbody.empty();
+        var i = 0;
+        var len = currentSelectedNodes.length;
+        for (i; i < len; i++) {
+            tbody.append($("<tr><td>" + (i + 1) + "</td><td>" + currentSelectedNodes[i] + "</td></tr>"));
+        }
+    };
+
+    var getMyTranswareServiceURL = function (endpoint, caseJSON) {
+        var calServiceUrl = endpoint;
+        var paramString = JSON.stringify(caseJSON);
+        var re = new RegExp("\" \"", 'g');
+        paramString = paramString.replace(re, "\"\"");
+
+        endpoint = endpoint.includes("http") == true ? endpoint : "http://" + endpoint;
+
+        var url = endpoint + "?key=f19d590dcc2b" + "&configuration=&jsWebIllustration=" + paramString;
+        return url;
+    };
+
+    var fillSelectBox = function () {
+        var selectBox = $("#endpointSelect");
+        var myTWNodes = myTWJSONkeys;
+        var len = myTWNodes.length;
+        var i = 0;
+        for (i; i < len; i++) {
+            var option = $("<option val=" + myTWNodes[i] + ">" + myTWNodes[i] + "</option>");
+            selectBox.append(option);
+        }
+        selectBox.select2();
+        selectBox.change(function () {
+            //add selected nodes to an array
+            var value = selectBox.val();
+            if (value != "") {
+                selectedNodes.push(value);
+                displaySelectedNode("selected_nodes_tbody", selectedNodes);
+            } else {
+                return;
+            }
+        });
+        $("#clear_endpoint").click(function () {
+            selectedNodes = [];
+            var tbody = $("#selected_nodes_tbody");
+            var testCasestbody = $("#testCases");
+            testCasestbody.empty();
+            tbody.empty();
+            buildScenarioTable(testCases, "testCases");
+        });
+    }
+
+    //public
+    var initialize = function () {
+        fillSelectBox();
+        $("#nodeSelectBox").hide();
+        $("#optionBox").hide();
+
+        $("#compare").click(function () {
+            var selectedNodesArray = selectedNodes;
+            //validation
+            if (selectedNodesArray.length == 0) {
+                alert("Please select node to compare");
+                return false;
+            }
+            var testCasestbody = $("#testCases");
+            testCasestbody.empty();
+            
+            buildScenarioTable(testCases, "testCases");
+            var thead = $("#tableTitle");
+            thead.empty();
+            var header = "<tr><th>No</th><th>Name</th><th>Endpoint 1</th><th>Endpoint 2</th>";
+            for (var o = 0 ; o < selectedNodesArray.length; o++) {
+                header += "<th>" + selectedNodesArray[o] + "</th>";
+            }
+            header += "<th>Final Result</th></tr>";
+            thead.append($(header));
+            compareTwoEndPoints();
+        });
+
+        $("#pressNext").click(function () {
+            console.log(endpoint1, endpoint2)
+            if (endpoint1 == "" || endpoint2 == "") {
+                $.notify("Please provide 2 endpoints to compare");
+                return false;
+            }
+            if (testCases.length == 0) {
+                $.notify("There is no test case for testing.")
+                return false;
+            }
+
+            
+            $("#nodeSelectBox").show();
+            
+        });
 
 
+        //TEST CASES
 
-	//public
-	var initialize = function (){
-		fillSelectBox();
-		$("#nodeSelectBox").hide();
-		$("#optionBox").hide();
-		$("#compare").click(function(){
-			var selectedNodesArray = selectedNodes;
-			//validation
-			if(selectedNodesArray.length == 0){
-				alert("Please select node to compare");
-				return false;
-			}
-			var testCasestbody = $("#testCases");
-			testCasestbody.empty();
-			buildScenarioTable(testCases, "testCases");
-			var thead = $("#tableTitle");
-			thead.empty();
-			var header = "<tr class='info'><th>No</th><th>Name</th><th>Endpoint 1</th><th>Endpoint 2</th>";
-			for(var o = 0 ; o < selectedNodesArray.length; o++){
-				header += "<th>"+ selectedNodesArray[o] +"</th>";
-			}
-			header += "<th>Final Result</th></tr>";
-			thead.append($(header));
-			compareTwoEndPoints();
-		});
+        $("#getAllCases").click(function () {
+            $("#tableTitle").notify("Loading test cases for " + selectedProduct, { position: "left-center", className: "success" });
+            Transamerica.Utils.getAllCases(selectedProduct.toLowerCase(), displayCases);
+        });
+        $("#queryElastic").click(function () {
+            userCustomQuery = $("#queryBox").val();
+            Transamerica.Utils.processQuery(selectedProduct.toLowerCase(), userCustomQuery || "*", displayCases);
+        });
 
-		$("#pressNext").click(function(){
-			var endpoint1 = $("#endpoint1").val();			
-			var endpoint2 = $("#endpoint2").val();
+        $("#discoverTestCase").click(function(){
+            $("#attributeBox").notify("Loading available attributes", { position: "top-center", className: "success" });
+            Transamerica.Utils.getIndexAttributeDistribution(selectedProduct);
+        });
+        //TODO: REFACTOR
+        $('input[name=endpoint1]').focusin(function () {
+            $('input[name=endpoint1]').val('');
+        });
 
-			if(endpoint1 === "" || endpoint2 === ""){
-				$.notify("Please provide 2 endpoints to compare");
-				return false;
-			}
-			if(testCases.length == 0){
-				$.notify("There is no test case for testing.")
-				return false;
-			}
-			else if(isSameSystem === false)
-			{	
-				//do this for if the systems are different
-				//actually get a case that is currently passing 
-			}else if(isSameSystem === true)
-			{
-				$("#nodeSelectBox").show();
-			}
-		});
+        $('input[name=endpoint1]').change(function () {
+            endpoint1 = $(this).val();
+        });
+        $('input[name=endpoint2]').change(function () {
+            endpoint2 = $(this).val();
+        });
+        $('input[name=endpoint2]').focusin(function () {
+            $('input[name=endpoint2]').val('');
+        });
 
-		$('input[type=radio][name=sameSystem]').change(function() {
-	        if (this.value == 'yes') 
-	        {
-	            isSameSystem = true;
-	        }
-	        else if (this.value == 'no') 
-	        {
-	            isSameSystem = false;
-	        }
-   		});
-
-   		$("#getAllCases").click(function(){
-   			Transamerica.Utils.processQuery(selectedProduct.toLowerCase(), "*" , displayCases);
-   		});
-   		$("#queryElastic").click(function(){
-   			$("#testCases").empty();
-   			userCustomQuery = $("#queryBox").val();
-   			Transamerica.Utils.processQuery(selectedProduct.toLowerCase(), userCustomQuery || "*", displayCases );
-   		});
-
-   		$("#discoverTestCase").click(function(){
-   			$("#attributeBox").tablesorter();
-   			Transamerica.Utils.getIndexAttributeDistribution(selectedProduct);
-   		});
-
-	};
-	var updateProduct = function updateProduct(value){
-		selectedProduct = value;
-		$("#productTitle").text(value);
-	}
-
-	var loadProducts = function loadProducts(selectBoxId){
-		selectBox = $("#productSelect");
-		var  i = 0;
-		for(i; i < products.length; i++){
-			var option = $("<option val="+products[i]+">"+products[i]+"</option>");
-			selectBox.append(option);
-		}
-		selectBox.change(function(){
-			var value = $(this).val();
-			if(value == ""){
-				$("#productTitle").text("Please select a product !");
-				return;
-			}
-			updateProduct(value);
-			$("#optionBox").show();
-		});
-	};
-	return {
-		loadProducts : loadProducts,
-		initialize: initialize,
-		outputs:outputs ,// for testing - remove 
-		testCases:testCases
-	};
+    };
+    var updateProduct = function updateProduct(value) {
+        selectedProduct = value;
+        $("#productTitle").text(value);
+    }
+    var loadProducts = function loadProducts(selectBoxId) {
+        selectBox = $("#productSelect");
+        var i = 0;
+        for (i; i < products.length; i++) {
+            var option = $("<option val=" + products[i] + ">" + products[i] + "</option>");
+            selectBox.append(option);
+        }
+        selectBox.change(function () {
+            var value = $(this).val();
+            if (value == "") {
+                $("#productTitle").text("Please select a product !");
+                return;
+            }
+            updateProduct(value);
+            $("#optionBox").show();
+        });
+    };
+    return {
+        loadProducts: loadProducts,
+        initialize: initialize,
+    };
 })();
 
 
