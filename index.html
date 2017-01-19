@@ -11,9 +11,6 @@
     <link href="library/jquery.json-viewer.css"  rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-    <script src="js/jquery.tablesorter.js"></script>
-    <script src="library/jquery.json-viewer.js"></script>
-
     <style>
         .modal-dialog {
             width: 100%
@@ -25,6 +22,9 @@
         .attrName{
             background-color: #7FE55C;
         }
+        a{
+            cursor: pointer;
+        }
     </style>
     
 </head>
@@ -35,99 +35,68 @@
     <br>
     <br>
     <br>
-    <div class="">
+    <form class="form-horizontal">
         <center>
-            <span id="productTitle"></span>
+            <h4  id="productTitle"></h4>
         </center>
-        <form class="form-horizontal">
-            <div class="form-group">
-                <label class="control-label col-sm-2" for="productSelect">Select Product</label>
-                <div class="col-sm-8">
-                    <select id="productSelect" class="form-control">
-                        <option default></option>
-                    </select>
-                </div>
+        <div class="form-group">
+            <label class="control-label col-sm-2" for="productSelect">Select Product</label>
+            <div class="col-sm-8">
+                <select id="productSelect" class="form-control">
+                    <option default></option>
+                </select>
             </div>
-            <div class="form-group" id="optionBox">
-                <center>
-                    <button id="discoverTestCase" type="button" data-toggle="modal" data-target="#searchPopup">Search</button>&nbsp&nbsp
-                    <button type="button" id="getAllCases">Get All Casses</button>
-                </center>
+        </div>
+        <div class="form-group" id="optionBox">
+            <center>
+                <button id="discoverTestCase" type="button" data-toggle="modal" data-target="#searchPopup">Search</button>&nbsp&nbsp
+                <button type="button" id="getAllCases">Get All Casses</button>
+            </center>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-sm-2" for="endpoint1">ENDPOINT 1:</label>
+            <div class="col-sm-8">
+                <input type="text" class="form-control" list="endpoint1" name="endpoint1" placeholder="Enter a web service url or select an available url">
+                <datalist id="endpoint1">
+                    <option value="win000231/us/Services/CalcService.svc/GetCalcForIllustration">myTransware Test</option>
+                    <option value="win000231/usmodl/Services/CalcService.svc/GetCalcForIllustration">myTransware Model</option>
+                </datalist>
             </div>
-            <div class="form-group">
-                <label class="control-label col-sm-2" for="endpoint1">ENDPOINT 1:</label>
-                <div class="col-sm-8">
-                    <input type="text" class="form-control" list="endpoint1" name="endpoint1" placeholder="Enter a web service url or select an available url">
-                    <datalist id="endpoint1">
-                        <option value="win000231/us/Services/CalcService.svc/GetCalcForIllustration">myTransware Test</option>
-                        <option value="win000231/usmodl/Services/CalcService.svc/GetCalcForIllustration">myTransware Model</option>
-                    </datalist>
-                </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-sm-2" for="endpoint2">ENDPOINT 2:</label>
+            <div class="col-sm-8">
+                <input type="text" class="form-control" list="endpoint2" name="endpoint2" placeholder="Enter a web service url or select an available url" />
+                <datalist id="endpoint2">
+                    <option value="win000231/us/Services/CalcService.svc/GetCalcForIllustration">myTransware Test</option>
+                    <option value="win000231/usmodl/Services/CalcService.svc/GetCalcForIllustration">myTransware Model</option>
+                </datalist>
             </div>
-            <div class="form-group">
-                <label class="control-label col-sm-2" for="endpoint2">ENDPOINT 2:</label>
-                <div class="col-sm-8">
-                    <input type="text" class="form-control" list="endpoint2" name="endpoint2" placeholder="Enter a web service url or select an available url" />
-                    <datalist id="endpoint2">
-                        <option value="win000231/us/Services/CalcService.svc/GetCalcForIllustration">myTransware Test</option>
-                        <option value="win000231/usmodl/Services/CalcService.svc/GetCalcForIllustration">myTransware Model</option>
-                    </datalist>
-                </div>
-            </div>
-            <div class="form-group">
-                <div class="col-sm-offset-2 col-sm-8">
-                    <button type="button" class="btn btn-primary" id="pressNext">Next</button>
-                </div>
-            </div>
-            <span id="notification"></span>
-        </form>
-    </div>
+        </div>
+        <span id="notification"></span>
+    </form>
     <hr>
     <center>
         <div class="row" id="nodeSelectBox">
-            <center>
-                <h3>JSON Schema Of the Response</h3>
-            </center>
-            <div>
-                <form class="form-horizontal">
-                    <div class="form-group">
-                        <label for="endpointSelect" class="control-label col-sm-4">Select Nodes To Compare</label>
-                        <div class="col-sm-6">
-                            <select id="endpointSelect" class="form-control">
-                                <option default></option>
-                            </select>
-                        </div>
-                    </div>
-                </form>
+            <div class="col-sm-6">
+                <select id="endpointSelect">
+                    <option default></option>
+                </select>
             </div>
-            <div>
-                <div>
-                    <button type="button" class="btn btn-danger" id="clear_endpoint">Clear</button>
-                    <br>
-                    <br>
-                    <center>
-                        <table border="1" class="table-condensed">
-                            <center>
-                                <h4>Selected Keys</h4>
-                            </center>
-                            <tbody id="selected_nodes_tbody"></tbody>
-                        </table>
-                        <br>
-                        <br>
-                    </center>
-                </div>
-                <div class="form-group">
-                    <div class="col-sm-offset-2 col-sm-8">
-                        <button type="button" class="btn btn-primary" id="compare">Compare</button>
-                    </div>
-                </div>
+            <div class="col-sm-6">
+                <a id="clear_endpoint">Clear</a>
+                <table border="1" class="table-condensed">
+                    <center><h4>Selected Keys</h4></center>
+                    <tbody id="selected_nodes_tbody"></tbody>
+                </table>
             </div>
         </div>
     </center>
     <hr>
     <div class="box">
-        <center><h4>Test Cases <span id="num_cases"></span></h4></center>
         <center>
+            <button type="button" class="btn btn-primary" id="compare">Compare</button>
+            <h4>Test Cases <span id="num_cases"></span></h4>
             <table border="1" class='table-condensed'>
                 <thead id="tableTitle"><tr><th>No</th><th>Name</th></tr></thead>
                 <tbody id="testCases"></tbody>
@@ -151,7 +120,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">CLOSE</button>
                     <button type="button" class="btn btn-success active" id="queryElastic" data-dismiss="modal">SEARCH</button>
                 </div>
                 <div class="modal-body">
@@ -204,11 +173,13 @@
     <script src="js/notify.min.js"></script>
     <script src="js/globals.js"></script>
     <script src="js/utils.js"></script>
+    <script src="js/search.js"></script>
     <script src="js/mainLogic.js"></script>     
 <script>
     //write script to call functions from mainLogic
     Transamerica.ARIESRegression.initialize();
-    Transamerica.ARIESRegression.loadProducts();
+
+
 </script>
 
 </html>
