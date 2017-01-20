@@ -5,28 +5,30 @@
     <meta charset="utf-8">
     <title>AVU Regression App</title>
     <meta name="description" content="" />
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">  
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css" rel="stylesheet" />
-    <link href="library/jquery.json-viewer.css"  rel="stylesheet" />
+    <link href="library/jquery.json-viewer.css" rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <style>
         .modal-dialog {
-            width: 100%
+            width: 100%;
         }
-        table{
+
+        table {
             cursor: pointer;
         }
 
-        .attrName{
+        .attrName {
             background-color: #7FE55C;
         }
-        a{
+
+        a {
             cursor: pointer;
         }
     </style>
-    
+
 </head>
 
 <body class="container">
@@ -37,7 +39,7 @@
     <br>
     <form class="form-horizontal">
         <center>
-            <h4  id="productTitle"></h4>
+            <h4 id="productTitle"></h4>
         </center>
         <div class="form-group">
             <label class="control-label col-sm-2" for="productSelect">Select Product</label>
@@ -49,8 +51,8 @@
         </div>
         <div class="form-group" id="optionBox">
             <center>
-                <button id="discoverTestCase" type="button" data-toggle="modal" data-target="#searchPopup">Search</button>&nbsp&nbsp
-                <button type="button" id="getAllCases">Get All Casses</button>
+                <button id="discoverTestCase" class="btn" type="button" data-toggle="modal" data-target="#searchPopup">Search</button>&nbsp&nbsp
+                <button type="button" class="btn" id="getAllCases">Get All Casses</button>
             </center>
         </div>
         <div class="form-group">
@@ -76,26 +78,44 @@
         <span id="notification"></span>
     </form>
     <hr>
-    <center>
-        <div class="row" id="nodeSelectBox">
-            <div class="col-sm-6">
-                <select id="endpointSelect">
-                    <option default></option>
-                </select>
-            </div>
-            <div class="col-sm-6">
+
+    <div class="row" id="nodeSelectBox">
+        <div class="col-sm-6">
+            <select id="endpointSelect">
+                <option default></option>
+            </select>
+            <a id="endpoint1_popular_key">Popular Keys</a>
+        </div>
+        <div class="col-sm-5">
+            <center>
                 <a id="clear_endpoint">Clear</a>
                 <table border="1" class="table-condensed">
-                    <center><h4>Selected Keys</h4></center>
+                    <h4>Selected Keys</h4>
                     <tbody id="selected_nodes_tbody"></tbody>
                 </table>
-            </div>
+                <br />
+                <button type="button" class="btn btn-primary" id="compare">Compare</button>
+            </center>
         </div>
-    </center>
+    </div>
+    <div class="pull-left" style="display:none" id="popularKeysBox">
+        <div class="col-sm-8">
+            <table border="1" class='table-condensed' id="attributeBox">
+                <thead>
+                    <tr style='background: #B2EBF0'>
+                        <th>No</th>
+                        <th>Popular Selected Keys</th>
+                    </tr>
+                </thead>
+                <tbody id="selectedKeyTable" style="overflow: auto;height: 400px;"></tbody>
+            </table>
+
+        </div>
+    </div>
+
     <hr>
-    <div class="box">
+    <div class="box" style="overflow:auto;height:500px">
         <center>
-            <button type="button" class="btn btn-primary" id="compare">Compare</button>
             <h4>Test Cases <span id="num_cases"></span></h4>
             <table border="1" class='table-condensed'>
                 <thead id="tableTitle"><tr><th>No</th><th>Name</th></tr></thead>
@@ -117,50 +137,72 @@
         </div>
     </div>
     <div class="modal fade" id="searchPopup" role="dialog">
-        <div class="modal-dialog">
+        <div class="modal-dialog container">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="btn btn-danger" data-dismiss="modal">CLOSE</button>
-                    <button type="button" class="btn btn-success active" id="queryElastic" data-dismiss="modal">SEARCH</button>
+                    <button data-toggle="collapse" id="loadSearchHistory" class="btn btn-success" data-target="#searchHistoryBox">Search History</button>
                 </div>
                 <div class="modal-body">
                     <div class="container">
                         <div class="row">
                             <form class="form-horizontal">
                                 <div class="form-group">
+                                    <label class="control-label col-sm-2" for="queryBox">Name: </label>
+                                    <div class="col-sm-8">
+                                        <input type="text" class="form-control" id="searchName" />
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    
                                     <label class="control-label col-sm-2" for="queryBox">Custom Query</label>
                                     <div class="col-sm-8">
                                         <input type="text" class="form-control" id="queryBox" />
                                     </div>
                                 </div>
-                                <div class="form-group">
+                                <div class="form-group" >
                                     <center>
-                                        <table border="1" class='table-condensed' style="overflow: auto">
+                                        <table border="1" class='table-condensed' >
                                             <thead><tr class="warning"><th>Selected Attribute</th><th>Value</th><th>Include/Exclude</th></tr></thead>
                                             <tbody id="attributeSelection"></tbody>
                                         </table>
+                                        <br /><br />
+                                        <button type="button" class="btn btn-primary active" id="queryElastic" data-dismiss="modal">SEARCH</button>
                                     </center>
                                 </div>
                             </form>
                         </div>
                         <hr>
-                        <div class="row">
-                            <div class="col-sm-8">
-                                <table border="1" class='table-condensed' id="attributeBox">
-                                    <thead>
-                                        <tr style='background: #B2EBF0'>
-                                            <th>Attribute</th>
-                                            <th>Category</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="attributeTable" style="overflow: auto;height: 400px;"></tbody>
+                        <div class="row collapse panel panel-primary" id="searchHistoryBox">
+                            <div class="panel-heading">Search History</div>
+                            <div class="panel-body">
+                                <table class="table">
+                                    <thead><tr><th>No.</th><th>Last Search</th><th>Search Query</th><th>Name</th></tr></thead>
+                                    <tbody id="searchHistoryTbody"></tbody>
                                 </table>
                             </div>
-                            <div class="col-sm-4">
-                                <table border="1" class='table-condensed' style="overflow: auto" border="1">
-                                    <thead><tr style='background: #B2EBF0'><th>Value</th><th colspan="2">Number Of Records</th></tr></thead>
-                                    <tbody id="distribution"></tbody>
-                                </table>
+                        </div>
+                        <div class="row panel panel-primary">
+                            <div class="panel-heading">Select Attributes</div>
+                            <div class="panel-body">
+                                <div class="col-sm-6" style="overflow:auto;height:500px">
+                                    <table  class='table-condensed table-hover' id="attributeBox">
+                                        <thead>
+                                            <tr style='background: #B2EBF0'>
+                                                <th>Attribute</th>
+                                                <th>Category</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="attributeTable" style="overflow: auto;height: 400px;"></tbody>
+                                    </table>
+                                </div>
+                                <div class="col-sm-6">
+                                    <table  class='table-condensed table-hover' style="overflow: auto">
+                                    <table  class='table-condensed ' style="overflow: auto">
+                                        <thead><tr style='background: #B2EBF0'><th>Value</th><th colspan="2">Number Of Records</th></tr></thead>
+                                        <tbody id="distribution"></tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -170,11 +212,11 @@
     </div>
     </div>
 </body>
-    <script src="js/notify.min.js"></script>
-    <script src="js/globals.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/search.js"></script>
-    <script src="js/mainLogic.js"></script>     
+<script src="js/notify.min.js"></script>
+<script src="js/globals.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/search.js"></script>
+<script src="js/mainLogic.js"></script>
 <script>
     //write script to call functions from mainLogic
     Transamerica.ARIESRegression.initialize();
