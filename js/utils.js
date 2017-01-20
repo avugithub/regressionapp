@@ -1,4 +1,4 @@
-Transamerica.Utils = (function () {
+Transamerica.Utils = (function(){
     var getAllkeys = function (obj) {
         //going over all keys until exhausted
         var keys = [];
@@ -63,6 +63,43 @@ Transamerica.Utils = (function () {
 
         }
     };
+
+    var saveSelectedJSONKeys = function saveSelectedJSONKeys(selectedNodesArray, endpoint1, endpoint2)
+    {
+        var params = {};
+        params.endpoint1 = endpoint1;
+        params.endpoint2 = endpoint2;
+        params.selectedKeyOutputs = selectedNodesArray;
+        var date = new Date();
+        var str = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
+        params.ActivityGUID = str;
+        //storing into the User Activity
+        var baseURL = "https://sl0r1qavql.execute-api.us-west-2.amazonaws.com/prod/saveuseractivity?tableName=UserActivity&params=";
+        var url = baseURL + encodeURIComponent(JSON.stringify(params));
+        AjaxCall(url, "", "GET", function (data) { console.log(data) });
+    };
+
+    var saveSearchQuery = function saveSearchQuery(productName, name, searchQuery, elasticSearchObj)
+    {
+        var params = {};
+        params.name = name || "N/A";
+        params.productName = productName;
+        params.searchQuery = JSON.stringify(searchQuery);
+        params.elasticSearchObj = JSON.stringify(elasticSearchObj);
+        var date = new Date();
+        var str = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
+        params.SearchGUID = str;
+
+        var baseURL = "https://sl0r1qavql.execute-api.us-west-2.amazonaws.com/prod/saveuseractivity?tableName=UserSearch&params=";
+        var url = baseURL + encodeURIComponent(JSON.stringify(params));
+        AjaxCall(url, "", "GET", function (data) { console.log(data) });
+    };
+
+
+
+
+
+
 
     var AjaxCallCORS = function (url, data, type, callback, errorcallback) {
         $.ajax(
@@ -153,23 +190,19 @@ Transamerica.Utils = (function () {
         return zip;
     };
 
-    var getCompRowsMarkup = function getCompRowsMarkup(source1, source2)
-    {
+    var getCompRowsMarkup = function getCompRowsMarkup(source1, source2) {
         var markup = "";
-        if (source1 instanceof Array == false && source1 instanceof Array == false)
-        {
+        if (source1 instanceof Array == false && source1 instanceof Array == false) {
             markup = `<tr><td>${source1}</td><td>${source2}</td></tr>`;
         }
-        else if (source1 instanceof Array == true && source1 instanceof Array == true)
-        {
+        else if (source1 instanceof Array == true && source1 instanceof Array == true) {
             if (source1.length > 0 && source2.length > 0) {
                 var valuePairs = zip(source1, source2);
                 var len = valuePairs.length;
                 for (var i = 0; i < len; i++) {
                     var source1Val = valuePairs[i][0];
                     var source2Val = valuePairs[i][1];
-                    if (typeof (source1Val) != "object" && typeof (source2Val) != "object")
-                    {
+                    if (typeof (source1Val) != "object" && typeof (source2Val) != "object") {
                         var translatedVals = valuePairs[i].map(function (val) {
                             return val == undefined ? "MISSING" : val
                         });
@@ -211,8 +244,10 @@ Transamerica.Utils = (function () {
         changePriorityOne: changePriorityOne,
         AjaxCallCORS: AjaxCallCORS,
         AjaxCall: AjaxCall,
+        saveSelectedJSONKeys: saveSelectedJSONKeys,
         getAllkeys: getAllkeys,
-        getUniqueVals:getUniqueVals,
+        getUniqueVals: getUniqueVals,
+        saveSearchQuery: saveSearchQuery,
         getCompRowsMarkup: getCompRowsMarkup,
     }
 })();

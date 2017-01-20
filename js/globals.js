@@ -18,7 +18,7 @@ Transamerica.Globals = (function(){
 "pcStateId":"Base Inputs",
 "pcSubStdId":"Base Inputs",
 "1035lumpsum":"1035 Lump Sum",
-"acAmount":"ADP",
+"acAmount":"Accidental Death Benefit",
 "acLTCEnable":"LTC",
 "acLTCEnable":"LTC",
 "acLTCAgentNumber":"LTC",

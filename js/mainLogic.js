@@ -1,31 +1,124 @@
-Transamerica.ARIESRegression = (function() {
+Transamerica.ARIESRegression = (function () {
     //const
     const products = ["FEBII", "ACCUMIULr", "FFIULII", "IUL09", "LB201701", "Super201701"];
     const myTWJSONkeys = Transamerica.Globals.myTWJSONkeys;
     //variables
-    var selectedProduct = "";
-    var selectedNodes = [];
-    var outputs = {};
-    var testCases = [];
-    var userCustomQuery = "";
-    var endpoint1 = "";
-    var endpoint2 = "";
+    var selectedProduct = "",
+        selectedNodes = [],
+        outputs = {},
+        testCases = [],
+        userCustomQuery = "",
+        endpoint1 = "",
+        endpoint2 = "",
+        searchHistoryData = {},
+        selectedRecord = {};
 
     var displayCases = function displayCases(data) {
         testCases = data["hits"]["hits"];
         console.log(testCases);
+        var searchParams = Transamerica.ElasticSearch.getLocals();
+        if (testCases.length > 0 && (JSON.stringify(searchParams.query) != selectedRecord.searchQuery || $("#searchName").val() != selectedRecord.name)) {
+            
+            Transamerica.Utils.saveSearchQuery(selectedProduct, $("#searchName").val(), searchParams.query, searchParams.elasticSearchQueryObj);
+        }
         buildScenarioTable(testCases, "testCases");
+
+    };
+
+    var displayAllCases = function displayCases(data) {
+        testCases = data["hits"]["hits"];
+        if (testCases.length == 0) {
+            $.notify("No Cases Found For " + selectedProduct);
+        }
+        buildScenarioTable(testCases, "testCases");
+    };
+
+    var displaySearchHistory = function displaySearchHistory(data){
+        console.log(data);
+        var searchHistoryTbody = $("#searchHistoryTbody");
+        searchHistoryTbody.empty();
+        if(data["hits"]["hits"].length > 0)
+        {
+            searchHistoryData = data["hits"]["hits"];
+            var len = searchHistoryData.length;
+            var i;
+            for (i = 0; i < len; i++)
+            {
+                var obj = searchHistoryData[i]["_source"];
+                var row = $(`<tr><td>${i + 1} <a class='loadHistRecord' data-index ="${i}">Select</a></td><td>${obj.SearchGUID}</td><td></td><td>${obj.name}</td></tr>`);
+                searchHistoryTbody.append(row);                
+            }
+
+            $(".loadHistRecord").click(function () {
+                var index = Number($(this).attr("data-index"));
+                selectedRecord = searchHistoryData[index]["_source"];
+                $("#attributeSelection").empty();
+
+                if (selectedRecord.elasticSearchObj)
+                {
+                    var searchQuery = JSON.parse(selectedRecord.searchQuery);
+                    var elasticSearchObj = JSON.parse(selectedRecord.elasticSearchObj);
+                    //populate data to input fields
+                    $("#searchName").val(selectedRecord.name);
+                    Transamerica.ElasticSearch.loadSelectedRecord(searchQuery, elasticSearchObj);
+                }
+                
+            });
+
+        }
+        else
+        {
+            searchHistoryTbody.append($("<tr><td>No Record Found !</td></tr>"));
+        }
+    };
+
+    var displayUserActivity = function () {
+
+        // Displaying the activity
+        var baseurl = "https://sl0r1qavql.execute-api.us-west-2.amazonaws.com/prod/displayuseractivity/";
+        //var URL = baseurl + JSON.stringify(ip_address);
+        Transamerica.Utils.AjaxCall(baseurl, "", "GET", function (data) {
+            console.log(data);
+            populateSelectedKeys(data);
+        });
+
+    };
+
+    var populateSelectedKeys = function (data) {
+        var tbody = $("#selectedKeyTable");
+        tbody.empty();
+        if (data.hasOwnProperty("key")) {
+            //print out the error
+        }
+        else {
+            console.log(data);
+            var obj = data;
+            var j = data.length;
+            for (i = 0; i < j; i++) {
+                var keys = obj[i]["key"];
+                keys = keys.charAt(0).toUpperCase() + keys.substr(1).toLowerCase();
+                var row = $("<tr id=" + obj[i]["key"] + "><td>" + (i + 1) +
+                   "</td><td>" + keys + "</td></tr>");
+                row.click(function () {
+                    var attribute = $(this).attr("id");
+                    selectedNodes.push(attribute);
+                    displaySelectedNode("selected_nodes_tbody", selectedNodes);
+                });
+                tbody.append(row);
+
+            }
+        }
     }
 
     var buildScenarioTable = function buildScenarioTable(dataArr, tbodyId) {
-        var tbody = $("#" + tbodyId);
+        var tbody = $("#" + tbodyId),
+            num = dataArr.length,
+            i,
+            queryAttributes = Transamerica.ElasticSearch.getLocals().elasticSearchQueryObj.attributes,
+            attributeNames = Transamerica.Utils.getUniqueVals(queryAttributes.map(function (x) {
+                return x.name
+            }));
         tbody.empty();
-        var num = dataArr.length;
-        var i;
-        var queryAttributes = Transamerica.ElasticSearch.elasticSearchQueryObj.attributes;
-        var attributeNames = Transamerica.Utils.getUniqueVals(queryAttributes.map(function(x) {
-            return x.name
-        }));
 
         var trthead = $("#tableTitle").find("tr");
         $(".attrName").remove();
@@ -49,10 +142,11 @@ Transamerica.ARIESRegression = (function() {
     }
 
     var compareTwoEndPoints = function compareTwoEndPoints() {
-        var i = 0;
-        var len = testCases.length;
+        var i = 0,
+            len = testCases.length;
         for (i; i < len; i++) {
             testCase = testCases[i];
+            console.log(i, testCase["_source"]["ScenarioGuid"]);
             var scenarioID = testCase["_source"]["ScenarioGuid"];
             var inputJSON = testCase["_source"]["InputJSON"];
             if (!testCase["_source"]["InputJSON"]) {
@@ -62,91 +156,110 @@ Transamerica.ARIESRegression = (function() {
                 });
                 continue;
             }
-            processComparison(scenarioID, inputJSON);
+            processComparisonV2(scenarioID, inputJSON);
         }
     };
 
-    //COMPARING
-    var processComparison = function processComparison(scenarioID, inputJSON) {
+    var processComparisonV2 = function (scenarioID, inputJSON) {
         //the reason I moved the code is closure in JS is only created inside function
         //refer to http://www.w3schools.com/js/js_function_closures.asp
-        var url1 = getMyTranswareServiceURL(endpoint1, inputJSON);
-        var url2 = getMyTranswareServiceURL(endpoint2, inputJSON);
 
-        var row = $("#" + scenarioID);
 
-        outputs[scenarioID] = {};
+        var error1;
+        var error2;
 
-        //send 2 ajax requests in order
-        Transamerica.Utils.AjaxCallCORS(url1, "", "GET", function(data) {
+        $.when(
+            $.ajax(
+		    {
+		        contentType: 'application/json; charset=utf-8',
+		        url: getMyTranswareServiceURL(endpoint1, inputJSON),
+		        type: "GET",
+		        dataType: 'jsonp',
+		        success: function (d) {
+		            $("#" + scenarioID).append($("<td><span class='glyphicon glyphicon-stop' style='color:green'></span></td>"));
+		        },
+		        error: function (data) {
+		            error1 = data;
 
-            outputs[scenarioID]["version1"] = {};
-            var version1 = JSON.parse(data);
-            row.append($("<td><span class='glyphicon glyphicon-stop' style='color:green'></span></td>"));
+		        }
+		    }),
+            $.ajax(
+		    {
+		        contentType: 'application/json; charset=utf-8',
+		        url: getMyTranswareServiceURL(endpoint2, inputJSON),
+		        type: "GET",
+		        dataType: 'jsonp',
+		        success: function (d) {
+		            $("#" + scenarioID).append($("<td><span class='glyphicon glyphicon-stop' style='color:green'></span></td>"));
+		        },
+		        error: function (data) {
+		            error2 = data;
 
-            Transamerica.Utils.AjaxCallCORS(url2, "", "GET", function(data) {
-                row.append($("<td><span class='glyphicon glyphicon-stop' style='color:green'></span></td>"));
-                outputs[scenarioID]["version2"] = {};
-                var version2 = JSON.parse(data);
-
-                //object for storing comparison data
-                outputs[scenarioID]["version1"]["selectedKeyOutputs"] = {};
-                outputs[scenarioID]["version2"]["selectedKeyOutputs"] = {};
+		        }
+		    })
+        ).done(function (response1, response2) {
+            var row = $("#" + scenarioID);
+            try {
+                response1 = JSON.parse(response1[0]);
+                response2 = JSON.parse(response2[0]);
 
                 var len = selectedNodes.length;
-                var outputString = "";
-
-
-                if (version1 != null & version2 != null) {
-                    if (version1.ErrorCode !== 9 & version2.ErrorCode !== 9) {
-                        //start compare
+                outputString = "";
+                if (response1 != null & response2 != null) {
+                    if (response1.ErrorCode !== 9 & response2.ErrorCode !== 9) {
                         var finalResult = true;
-
                         for (var j = 0; j < len; j++) {
                             var currentNode = selectedNodes[j];
-                            var version1Values = getValueForNode(version1, currentNode);
-                            var version2Values = getValueForNode(version2, currentNode);
+                            var response1Values = getValueForNode(response1, currentNode);
+                            var response2Values = getValueForNode(response2, currentNode);
 
-                            //cache the  values for current node so we can display later
-                            outputs[scenarioID]["version1"]["selectedKeyOutputs"][currentNode] = version1Values;
-                            outputs[scenarioID]["version2"]["selectedKeyOutputs"][currentNode] = version2Values;
-
-                            console.log(`Comparing : (${currentNode})`, version1Values, version2Values)
-                            var result = compareTwoNodes(version1Values, version2Values)
+                            //console.log(`Comparing : (${currentNode})`, response1Values, response2Values)
+                            var result = compareTwoNodes(response1Values, response2Values)
                             if (result === false) {
                                 finalResult = false;
                             }
                             outputString = `<span class='glyphicon glyphicon-stop' style="color:` + colorCode(result) + `"></span>`;
                             var domID = `details_${scenarioID}_${j}`;
                             row.append($(`<td id='${domID}' style="background:#FAFFD1">${outputString}</td>`));
-                            rowClickEventHandler(domID, scenarioID, currentNode);
+                            rowClickEventHandler(domID, scenarioID, currentNode, response1Values, response2Values);
                         }
                         row.append($(`<td style="color:` + colorCode(finalResult) + `">${finalResult === true ? "PASS" : "FAIL"}</td>`));
-                    } else if (version1.ErrorCode === 9 || version2.ErrorCode === 9) {
+                    }
+                    else if (response1.ErrorCode === 9 || response2.ErrorCode === 9) {
                         for (var j = 0; j < len; j++) {
                             var currentNode = selectedNodes[j];
                             outputString = `<span class='glyphicon glyphicon-stop' style="color:red"></span>`;
                             row.append($(`<td>${outputString}</td>`));
                         }
-                        var message = version1.ErrorCode === 9 ? "ENDPOINT A returns an Error Message : " + version1.Messages : "ENDPOINT B returns an Error Message : " + version2.Messages;
-                        if (version1.ErrorCode === 9 && version2.ErrorCode === 9) {
-                            message = "BOTH ENDPOINTS RETURN ERROR. ENDPOINT A: " + version1.Messages + "| ENDPOINT B :" + version2.Messages;
+                        var message = response1.ErrorCode === 9 ? "ENDPOINT A returns an Error Message : " + response1.Messages : "ENDPOINT B returns an Error Message : " + response2.Messages;
+                        if (response1.ErrorCode === 9 && response2.ErrorCode === 9) {
+                            message = "BOTH ENDPOINTS RETURN ERROR. ENDPOINT A: " + response1.Messages + "| ENDPOINT B :" + response2.Messages;
                         }
                         row.append($(`<td style="color:red">FAIL</td><td>${message}</td>`));
                     }
                 } else {
-                    $.notify("No Data Received From Endpoint" + version1 != null ? endpoint1 : endpoint2);
+                    row.css("background-color", "yellow");
+                    $.notify("No Data Received From Endpoint" + response1 != null ? endpoint1 : endpoint2);
                 }
-            }, function(data) {
-                $.notify(" ENDPOINT 2 - ERROR : Got error from the webervice. Status: " + data.status);
+            }
+            catch (e) {
+                row.css("background-color", "yellow");
+                $.notify("Error: ", e);
+            }
+        }).fail(function (data, s) {
+            var row = $("#" + scenarioID);
+            if (error1 != null && error2 == null) {
+                $.notify("ENDPOINT 1 - ERROR : Got error from the webervice. Status: " + data.status);
                 row.append($("<td><span class='glyphicon glyphicon-stop' style='color:red'></span></td>"));
-            });
-        }, function(data) {
-            $.notify("ENDPOINT 1 - ERROR : Got error from the webervice. Status: " + data.status);
-            row.append($("<td><span class='glyphicon glyphicon-stop' style='color:red'></span></td>"));
+            } else if (error2 != null && error1 == null) {
+                $.notify("ENDPOINT 2 - ERROR : Got error from the webervice. Status: " + data.status);
+                row.append($("<td><span class='glyphicon glyphicon-stop' style='color:red'></span></td>"));
+            } else if (error2 != null && error1 != null) {
+                $.notify("ENDPOINT 1 & 2 - ERROR : Got error from the webervice. Status: " + data.status);
+                row.append($("<td><span class='glyphicon glyphicon-stop' style='color:red'></span></td>"));
+                row.append($("<td><span class='glyphicon glyphicon-stop' style='color:red'></span></td>"));
+            }
         });
-
-        Transamerica.ARIESRegression.outputs = outputs;
     };
 
     var colorCode = function colorCode(bool) {
@@ -157,16 +270,13 @@ Transamerica.ARIESRegression = (function() {
         }
     }
 
-    var rowClickEventHandler = function rowClickEventHandler(domID, scenarioId, currentNode) {
-        $("#" + domID).click(function() {
-
-            var caseName = document.getElementById(scenarioId).getElementsByClassName("ScenarioName")[0].innerHTML;
-            var endpoint1Data = outputs[scenarioId]["version1"]["selectedKeyOutputs"][currentNode];
-            var endpoint2Data = outputs[scenarioId]["version2"]["selectedKeyOutputs"][currentNode];
-            $("#testCaseName").html("- Test Case: " + caseName + " Comparison Data For: " + currentNode);
+    var rowClickEventHandler = function rowClickEventHandler(domID, scenarioID, currentNode, version1, version2) {
+        $("#" + domID).click(function () {
+            var caseName = document.getElementById(scenarioID).getElementsByClassName("ScenarioName")[0].innerHTML;
+            $("#testCaseName").text("- Test Case: " + caseName + " Comparison Data For: " + currentNode);
             $("#comparisonTable").empty();
-            $("#comparisonTable").append($(Transamerica.Utils.getCompRowsMarkup(endpoint1Data, endpoint2Data)));
-            $(".viewData").click(function() {
+            $("#comparisonTable").append($(Transamerica.Utils.getCompRowsMarkup(version1, version2)));
+            $(".viewData").click(function () {
                 $(this).parent().parent().parent().parent().find(".dataBox").toggle();
             });
             $("#detailsModal").modal("show");
@@ -207,7 +317,7 @@ Transamerica.ARIESRegression = (function() {
         var len = arr1.length;
         var i = 0;
         for (i; i < len; i++) {
-            if (typeof(arr1[i]) == "object" && typeof(arr2[i]) == "object") {
+            if (typeof (arr1[i]) == "object" && typeof (arr2[i]) == "object") {
                 result = JSON.stringify(arr1[i]) === JSON.stringify(arr2[i]); // we can go deeper 
             } else {
                 if (arr1[i] != arr2[i]) {
@@ -262,17 +372,17 @@ Transamerica.ARIESRegression = (function() {
         selectBox.select2({
             placeholder: "Select one or more attributes to compare"
         });
-        selectBox.change(function() {
+        selectBox.change(function () {
             //add selected nodes to an array
             var value = selectBox.val();
-            if (value != "") {
+            if  (value != "" && (selectedNodes.indexOf(value)==-1)) {
                 selectedNodes.push(value);
                 displaySelectedNode("selected_nodes_tbody", selectedNodes);
             } else {
                 return;
             }
         });
-        $("#clear_endpoint").click(function() {
+        $("#clear_endpoint").click(function () {
             selectedNodes = [];
             var tbody = $("#selected_nodes_tbody");
             var testCasestbody = $("#testCases");
@@ -287,7 +397,13 @@ Transamerica.ARIESRegression = (function() {
         loadProducts();
         fillSelectBox();
         $("#optionBox").hide();
-        $("#compare").click(function() {
+
+        $("#endpoint1_popular_key").click(function () {
+            displayUserActivity();
+            $("#popularKeysBox").toggle();
+        });
+
+        $("#compare").click(function () {
             var selectedNodesArray = selectedNodes;
             //validation
             if (endpoint1 == "" || endpoint2 == "") {
@@ -316,45 +432,59 @@ Transamerica.ARIESRegression = (function() {
             }
             header += "<th>Final Result</th></tr>";
             thead.append($(header));
+            Transamerica.Utils.saveSelectedJSONKeys(selectedNodesArray, endpoint1, endpoint2);
             compareTwoEndPoints();
         });
 
         //TEST CASES
-        $("#getAllCases").click(function() {
+        $("#getAllCases").click(function () {
+            $(this).attr("disabled", true);
             $("#tableTitle").notify("Loading test cases for " + selectedProduct, {
                 position: "left-center",
                 className: "success"
             });
-            Transamerica.ElasticSearch.getAllCases(selectedProduct.toLowerCase(), displayCases);
+            Transamerica.ElasticSearch.getAllCases(selectedProduct.toLowerCase(),function(data){
+                displayAllCases(data);
+                $("#getAllCases").attr("disabled", false);
+            });
         });
-        $("#queryElastic").click(function() {
+        $("#queryElastic").click(function () {
             userCustomQuery = $("#queryBox").val();
+            $("#tableTitle").notify("Loading test cases for " + selectedProduct, {
+                position: "left-center",
+                className: "success"
+            });
             Transamerica.ElasticSearch.processQuery(selectedProduct.toLowerCase(), userCustomQuery || "*", displayCases);
         });
 
-        $("#discoverTestCase").click(function() {
-            $("#attributeBox").notify("Loading available attributes", {
-                position: "top-center",
+        $("#discoverTestCase").click(function () {
+            $("#attributeTable").empty();
+            $("#distribution").empty();
+            $.notify("Loading available attributes & search history", {
                 className: "success"
             });
+            Transamerica.ElasticSearch.loadSearchHistory(selectedProduct, displaySearchHistory);
             Transamerica.ElasticSearch.getIndexAttributeDistribution(selectedProduct);
         });
+
+
         //TODO: REFACTOR
-        $('input[name=endpoint1]').focusin(function() {
+        $('input[name=endpoint1]').focusin(function () {
             $('input[name=endpoint1]').val('');
         });
 
-        $('input[name=endpoint1]').change(function() {
+        $('input[name=endpoint1]').change(function () {
             endpoint1 = $(this).val();
         });
-        $('input[name=endpoint2]').change(function() {
+        $('input[name=endpoint2]').change(function () {
             endpoint2 = $(this).val();
         });
-        $('input[name=endpoint2]').focusin(function() {
+        $('input[name=endpoint2]').focusin(function () {
             $('input[name=endpoint2]').val('');
         });
 
     };
+
     var updateProduct = function updateProduct(value) {
         selectedProduct = value;
         $("#productTitle").text(value);
@@ -364,7 +494,7 @@ Transamerica.ARIESRegression = (function() {
         selectBox.select2({
             data: products
         });
-        selectBox.change(function() {
+        selectBox.change(function () {
             var value = $(this).val();
             if (value == "") {
                 $("#productTitle").text("Please select a product !");
@@ -376,6 +506,6 @@ Transamerica.ARIESRegression = (function() {
     };
     return {
         initialize: initialize,
-        removeSelectedNode: removeSelectedNode
+        removeSelectedNode: removeSelectedNode,
     };
 })();

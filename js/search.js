@@ -4,21 +4,10 @@ Transamerica.ElasticSearch = (function() {
         "attributes": [],
         "custom_query": ""
     };
-    var sampleQuery = {
-        filtered: {
-            query: {},
-            filter: {
-                bool: {
-                    must: [],
-                    must_not: [],
-                    should: [],
-                }
-            }
-        }
-    };
+    var query = {};
 
     var getIndexAttributeDistribution = function(tableName, domContainer) {
-        var requestUrl = "https://m7kx722wp8.execute-api.us-west-2.amazonaws.com/prod/getindexdistribution?tableName=" + tableName;
+        var requestUrl = "https://sl0r1qavql.execute-api.us-west-2.amazonaws.com/prod/getindexdistribution?tableName=" + tableName;
 
         Transamerica.Utils.AjaxCall(requestUrl, "", "GET", function(data) {
             buildProductIndexAttributes(data, domContainer);
@@ -50,9 +39,11 @@ Transamerica.ElasticSearch = (function() {
         }
     }
 
-    var categorizeAttribute = function categorizeAttribute(attribute) {
+    var categorizeAttribute = function categorizeAttribute(attribute)
+    {
         var availableCategories = Transamerica.Globals.myTWInputCategories;
-        if (attribute.includes("InputJSON")) {
+        if (attribute.includes("InputJSON"))
+        {
             var myTWkey = attribute.replace("InputJSON.", "");
             if (availableCategories.hasOwnProperty(myTWkey)) {
                 return availableCategories[myTWkey];
@@ -65,7 +56,8 @@ Transamerica.ElasticSearch = (function() {
         }
     }
 
-    var rowClickHandler = function(attribute, row) {
+    var rowClickHandler = function (attribute, row)
+    {
         row.click(function() {
             //highlight the row clicked
             var selected = $(this).hasClass("highlight");
@@ -77,7 +69,7 @@ Transamerica.ElasticSearch = (function() {
                     var value = key;
                     var count = values[key];
                     var row = $("<tr><td><b>" + value + "</b></td><td>" + count + " records</td><td>" +
-                        "<a class='add'><span class='glyphicon glyphicon-plus' style='color:green'>&nbsp;</span></a><a class='remove'><span style='color:red' class='glyphicon glyphicon-minus'></span></a></td></tr>");
+                        "<a class='include'><span class='glyphicon glyphicon-plus' style='color:green'>&nbsp;</span></a><a class='exclude'><span style='color:red' class='glyphicon glyphicon-minus'></span></a></td></tr>");
                     valueSelectHandler(row, attribute, key);
                     tbody.append(row);
                 }
@@ -89,7 +81,7 @@ Transamerica.ElasticSearch = (function() {
         row.find("a").click(function() {
             var tbody = $("#attributeSelection");
             var queryType = "include";
-            if ($(this).attr("class") == "remove") {
+            if ($(this).attr("class") == "exclude") {
                 queryType = "exclude"
             }
             if (attributeExists(attribute, value)) {
@@ -100,16 +92,31 @@ Transamerica.ElasticSearch = (function() {
                     value: value,
                     queryType: queryType
                 });
-                var selectedAttributeRow = $("<tr><td>" + attribute + "</td><td>" + value + "</td><td>" + queryType.toUpperCase() +
-                    "<a class='removeSelectedAttribute'><span style='color:red' class='glyphicon glyphicon-remove'></span></a></td></tr>");
-                selectedAttributeRow.find("a").click(function() {
-                    if ($(this).attr("class") == "removeSelectedAttribute") {
-                        selectedAttributeRow.remove();
-                        removeAttribute(attribute, value);
-                    }
-                });
-                tbody.append(selectedAttributeRow);
+                displaySelectedAttributes();
             }
+        });
+    };
+
+    var displaySelectedAttributes = function buildSelectedAttributeTable() {
+        var tbody = $("#attributeSelection");
+        tbody.empty();
+        var selectedAttributes = elasticSearchQueryObj.attributes;
+        var i,
+            len = selectedAttributes.length,
+            attribute;
+        for (i = 0; i < len; i++)
+        {
+            attribute = selectedAttributes[i];
+            var selectedAttributeRow = $("<tr><td class='selectedAttributeName'>" + attribute.name + "</td><td class='selectedAttributeValue'>" + attribute.value + "</td><td>" + attribute.queryType.toUpperCase() +
+                    `<a class='removeAttribute' data-index='${i}'><span style='color:red' class='glyphicon glyphicon-remove'></span></a></td></tr>`);
+            tbody.append(selectedAttributeRow);
+        }
+
+        $(".removeAttribute").click(function () {
+            var index = Number($(this).attr("data-index"));
+            var attribute = elasticSearchQueryObj.attributes[index];
+            removeAttribute(attribute.name, attribute.value);
+            $(this).closest("tr").remove();
         });
     };
 
@@ -156,6 +163,7 @@ Transamerica.ElasticSearch = (function() {
         //must -> AND
         //must not -> EXCEPT
         //should -> OR
+        
         var includedAttributes = elasticSearchQueryObj.attributes.filter(function(x) {
             return (x.queryType === "include");
         });
@@ -192,7 +200,18 @@ Transamerica.ElasticSearch = (function() {
         });
 
 
-        var newQuery = sampleQuery;
+        var newQuery = {
+            filtered: {
+                query: {},
+                filter: {
+                    bool: {
+                        must: [],
+                        must_not: [],
+                        should: [],
+                    }
+                }
+            }
+        };
         newQuery.filtered.query = {
             query_string: {
                 query: queryString || "*"
@@ -231,9 +250,10 @@ Transamerica.ElasticSearch = (function() {
 
     var processQuery = function processQuery(tableName, customQuery, callBack) {
         var server = "search-scenarios-llsguds6zuyl7hl4gfsomx4pxi.us-west-2.es.amazonaws.com";
-        var query = buildQuery(customQuery);
+        query = buildQuery(customQuery);
         callES(server, tableName + "/_search", "GET", JSON.stringify(query), callBack);
     };
+
 
     var getAllCases = function getAllCases(tableName, callBack) {
         var server = "search-scenarios-llsguds6zuyl7hl4gfsomx4pxi.us-west-2.es.amazonaws.com";
@@ -242,6 +262,26 @@ Transamerica.ElasticSearch = (function() {
             "size": 9999
         };
         callES(server, tableName + "/_search", "GET", JSON.stringify(query), callBack);
+    };
+
+
+    var loadSearchHistory = function loadUserSearchData(product, callBack) {
+        var server = "search-scenarios-llsguds6zuyl7hl4gfsomx4pxi.us-west-2.es.amazonaws.com";
+        var searchHistoryquery = {
+            "size": 100,
+            "query": {
+                "match": {
+                    "productName": product
+                }
+            }
+        };
+        callES(server, "usersearch/_search", "GET", JSON.stringify(searchHistoryquery), callBack);
+    };
+    
+    var loadSelectedRecord = function loadSelectedRecord(m_searchQuery, m_elasticSearchObj) {
+        elasticSearchQueryObj = m_elasticSearchObj;
+        query = m_searchQuery;
+        displaySelectedAttributes();
     };
 
     var callES = function callES(server, url, method, data, successCallback, completeCallback) {
@@ -277,12 +317,28 @@ Transamerica.ElasticSearch = (function() {
         return server + "/" + url;
     }
 
+
+    var getLocals = function () {
+        return {
+            elasticSearchQueryObj: elasticSearchQueryObj,
+            query: query
+        }
+    };
+
+    var setLocals = function (m_searchQuery, m_elasticSearchQueryObj) {
+        elasticSearchQueryObj = m_elasticSearchQueryObj;
+        query = m_searchQuery;
+    };
+
     return {
         getIndexAttributeDistribution: getIndexAttributeDistribution,
         processQuery: processQuery,
         getAllCases: getAllCases,
         callES: callES,
-        elasticSearchQueryObj: elasticSearchQueryObj,
         recordAttributes: recordAttributes,
+        loadSearchHistory: loadSearchHistory,
+        loadSelectedRecord: loadSelectedRecord,
+        getLocals: getLocals,
+        setLocals: setLocals
     }
 })();
